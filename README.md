@@ -1,2 +1,3 @@
-# Triumf-Scheduler
-Scheduler program for Triumf, Python Based
+# TRIUMF-Scheduler
+Genetic Scheduler Algorithm program for TRIUMF Beam Accelerator
+Coded in Python
