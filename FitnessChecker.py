@@ -29,7 +29,7 @@ def main():
     user = getpass.getuser()
 
     # Grabs filename input from user
-    schedule_name, requests_name = 'Schedule 138 Ancestor.xlsx', 'Schedule 138 Beam Requests.xlsx'
+    schedule_name, requests_name = ask_file_names()
 
     # I placed my excel files in C:\Users\USERNAME\Documents. Note: depending on where the file is *change*
     schedule_path = os.path.join("C:\\Users", user, "Documents", schedule_name)
@@ -45,6 +45,7 @@ def main():
     num_priorities, exp_not_listed = check_priorities(scheduled_experiments, exp_priorities)
 
     # Outputs - Will probably be made into a separate function and saved for future use
+    print("-" * 200)
     print("OVERVIEW OF SCHEDULE FITNESS")
     print("-" * 200)
     print("Experiments Scheduled: " + str(len(scheduled_experiments)))
