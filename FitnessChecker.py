@@ -13,14 +13,7 @@ THIS IS NOT THE SAME FOR THE REQUESTS
 import getpass
 import os.path
 import pandas as pd
-
-
-"""Might use this function later to help find the files, not neccessary"""
-# def find(fname:str, path:str):
-#     """Finds first file matching the fname inside of a directory"""
-#     for root, dirs, files in os.walk(path):
-#         if fname in files:
-#             return os.path.join(root, fname)
+import ExcelFileManager as efm
 
 
 def main():
@@ -29,45 +22,23 @@ def main():
     user = getpass.getuser()
 
     # Grabs filename input from user
-    schedule_name, requests_name = ask_file_names()
+    schedule_name, requests_name = efm.ask_file_names()
 
     # I placed my excel files in C:\Users\USERNAME\Documents. Note: depending on where the file is *change*
     schedule_path = os.path.join("C:\\Users", user, "Documents", schedule_name)
     requests_path = os.path.join("C:\\Users", user, "Documents", requests_name)
 
     # assign the excel data frame to schedule variable
-    schedule = read_file(schedule_path)
-    requests = read_file(requests_path)
+    schedule = efm.read_file(schedule_path)
+    requests = efm.read_file(requests_path)
 
     # Find unique scheduled experiments and requested experiments w/priorities
     scheduled_experiments = get_unique_experiments(schedule)
     exp_priorities = get_experiments_and_priorities(requests)
     num_priorities, exp_not_listed = check_priorities(scheduled_experiments, exp_priorities)
 
-    # Outputs - Will probably be made into a separate function and saved for future use
-    print("-" * 200)
-    print("OVERVIEW OF SCHEDULE FITNESS")
-    print("-" * 200)
-    print("Experiments Scheduled: " + str(len(scheduled_experiments)))
-    print("Beam requests satisfied: " + str(len(scheduled_experiments)) + '/' + str(len(exp_priorities)))
-    print("There are " + str(num_priorities['H']) + " high priority experiment(s) and " +
-                             str(num_priorities['M']) + " medium priority experiment(s) scheduled.")
-    print("High Priority Experiments / Total Experiments: " + str(num_priorities['H'])
-          + '/' + str(len(scheduled_experiments)))
-
-    if len(exp_not_listed) > 0:
-        print("Experiments:", end="")
-        for i in exp_not_listed:
-            print(" " + i, end="")
-        print(" are not listed in the requests file so their priority is not accounted for.")
-
-
-def read_file(path: str) -> object:
-    """Open excel schedule, displays contents turns excel file into a data frame: schedule"""
-    pd.set_option('display.max_rows', None)
-    pd.set_option('display.max_columns', None)
-    excel_file = pd.read_excel(path)  # first index: row, second index: column ex. schedule.values[0][0] == 'Date'
-    return excel_file
+    # Call output function to display fitness
+    output_fitness(exp_not_listed, exp_priorities, num_priorities, scheduled_experiments)
 
 
 def get_unique_experiments(schedule: object) -> set:
@@ -107,11 +78,22 @@ def check_priorities(scheduled_experiments: set, exp_priorities: dict) -> object
     return num_priorities, not_listed
 
 
-def ask_file_names() -> object:
-    """Prompts user for file names for requests and schedules, then returns them"""
-    schedule_name = input("Input schedule file name (Schedule 138 Ancestor.xlsx): ")
-    requests_name = input("Input beam requests file (Schedule 138 Beam Requests.xlsx): ")
-    return schedule_name, requests_name
+def output_fitness(exp_not_listed, exp_priorities, num_priorities, scheduled_experiments):
+    print("-" * 200)
+    print("OVERVIEW OF SCHEDULE FITNESS")
+    print("-" * 200)
+    print("Experiments Scheduled: " + str(len(scheduled_experiments)))
+    print("Beam requests satisfied: %d/%d, %0.2f"
+          % (len(scheduled_experiments), len(exp_priorities), (len(scheduled_experiments)/len(exp_priorities))))
+    print("There are %d high priority experiment(s) and %d medium priority experiment(s) scheduled."
+          % (num_priorities['H'], num_priorities['M'],))
+    print("High Priority Experiments / Total Experiments: %d/%d, %0.2f"
+          % (num_priorities['H'], len(scheduled_experiments), (num_priorities['H']/(len(scheduled_experiments)))))
+    if len(exp_not_listed) > 0:
+        print("Experiments:", end="")
+        for i in exp_not_listed:
+            print(" " + i, end="")
+        print(" are not listed in the requests file so their priority is not accounted for.")
 
 
 if __name__ == "__main__":
