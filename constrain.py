@@ -145,8 +145,5 @@ def check_targetblock(schedule: object):
 
     return valid_schedule
 
-def check_targetblock() -> object:
-    """check rule 3 and rule 5"""
-
 if __name__ == "__main__":
     main()
