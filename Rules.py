@@ -1,5 +1,6 @@
 import constraint
 """
+Author: David Chin
 Rule 1: The location of the Target Station at the schedule start is fixed and cannot change, and the corresponding
 Target Module is also fixed
 Rule 2: The Target Station/Target Module combination alternates for each target block
