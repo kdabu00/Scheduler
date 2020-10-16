@@ -12,7 +12,6 @@ THIS IS NOT THE SAME FOR THE REQUESTS
 
 import getpass
 import os.path
-import pandas as pd
 import ExcelFileManager as efm
 
 
@@ -33,16 +32,23 @@ def main():
     requests = efm.read_file(requests_path)
 
     # Find unique scheduled experiments and requested experiments w/priorities
-    scheduled_experiments = get_unique_experiments(schedule)
-    exp_priorities = get_experiments_and_priorities(requests)
+    scheduled_experiments, schedule_facilities = get_unique_experiments(schedule)
+    exp_priorities, request_facilities = get_experiments_requested(requests)
     num_priorities = check_priorities(scheduled_experiments, exp_priorities)
 
+    schedule_fields = check_fields(scheduled_experiments, exp_priorities)
+
+    schedule_acc = check_acc(scheduled_experiments, exp_priorities)
+
     # Call output function to display fitness
-    output_fitness(exp_priorities, num_priorities, scheduled_experiments)
+    output_fitness(exp_priorities, num_priorities, scheduled_experiments,
+                   schedule_fields, schedule_acc, schedule_facilities, request_facilities)
 
 
 def get_unique_experiments(schedule: object) -> set:
-    """Finds the number of experiments index: 5 == Exp. #"""
+    """Finds the number of different scheduled experiments, returns these experiments, along with a set of different
+    facilities scheduled
+    """
     # Rename the column names to the appropriate values
     schedule.columns = ['Date', 'Shift', 'Cyclotron_Offline', 'current(uA)', 'BL2A_Offline',
                         'I_Exp.#', 'I_Facility', 'I_Note', 'I_West/East', 'I_Beam', 'I_Energy (keV)', 'I_Tgt',
@@ -65,6 +71,9 @@ def get_unique_experiments(schedule: object) -> set:
     # Strip trailing and leading whitespace from facility column
     schedule['I_Facility'] = schedule['I_Facility'].str.strip()
 
+    # Check the total amount of different facilities
+    facilities = set(schedule['I_Facility'].tolist())
+
     # Make a list of each row with ISAC experiment #, Facility, Beam, Target, and Source
     unique_exp = schedule[['I_Exp.#', 'I_Facility', 'I_Beam', 'I_Tgt', 'I_Source']].values.tolist()
 
@@ -72,21 +81,30 @@ def get_unique_experiments(schedule: object) -> set:
     # Store each experiment as a tuple inside of a set
     for exp in unique_exp:
         scheduled_exp.add(tuple(exp))
-    return scheduled_exp
+    return scheduled_exp, facilities
 
 
-def get_experiments_and_priorities(requests: object) -> dict:
-    """Creates a dictionary with experiments as key, and priority as value"""
+def get_experiments_requested(requests: object) -> dict:
+    """Creates a dictionary with experiments as key, and priority & field as value, returns the dictionary along with a
+    set of different facilities requested
+    """
     # Check if a request is an ISAC experiment and if the Experiment # is Test
     unique_exp = requests.loc[(requests['Beam options'] == 'ISAC Target (RIB)') & (requests['Experiment'] != 'Test')]
+    # Put all priorities, fields, accelerator areas in their own lists
     priority = unique_exp['Priority'].tolist()
     field = unique_exp['Field'].tolist()
-    unique_exp = unique_exp.fillna('') # change nan values into empty string
+    acc = unique_exp['Acc Area'].tolist()
+    # Create a set of unique facilities scheduled
+    facilities = set(unique_exp['Facility'].tolist())
+    # change nan values into empty string
+    unique_exp = unique_exp.fillna('')
+    # Create a list of unique experiments with values Experiment, Facility, Beam, Target, and Ion Source
     unique_exp = unique_exp[['Experiment', 'Facility', 'Beam', 'Target', 'Ion Source']].values.tolist()
     exp_priorities = {}
     for i in range(len(unique_exp)):
-        exp_priorities[tuple(unique_exp[i])] = [priority[i], field[i]]
-    return exp_priorities
+        # Turn each experiment into a tuple that will be used to ID unique experiments
+        exp_priorities[tuple(unique_exp[i])] = [priority[i], field[i], acc[i]]
+    return exp_priorities, facilities
 
 
 def check_priorities(scheduled_experiments: set, exp_priorities: dict) -> object:
@@ -99,23 +117,73 @@ def check_priorities(scheduled_experiments: set, exp_priorities: dict) -> object
                 num_priorities['H'] += 1
             else:
                 num_priorities['M'] += 1
-        else:
-            print(i, end="")
-    print()
+    #     else:
+    #         print(i, end="")
+    # print()
     return num_priorities
 
 
-def output_fitness(exp_priorities, num_priorities, scheduled_experiments):
+def check_fields(scheduled_experiments: set, exp_fields: dict) -> object:
+    """Checks the # of fields scheduled"""
+    num_fields = {'ASTRO': 0, 'FSYMM': 0, 'STRUC': 0, 'LS': 0}
+    for i in scheduled_experiments:
+        if i in exp_fields:
+            if exp_fields[i][1] == 'ASTRO':
+                num_fields['ASTRO'] += 1
+            elif exp_fields[i][1] == 'FSYMM':
+                num_fields['FSYMM'] += 1
+            elif exp_fields[i][1] == 'STRUC':
+                num_fields['STRUC'] += 1
+            elif exp_fields[i][1] == 'Life Science':
+                num_fields['LS'] += 1
+    #     else:
+    #         print(i, end="")
+    # print()
+    return num_fields
+
+
+def check_acc(scheduled_experiments: set, exp_acc: dict) -> object:
+    """Checks the # of Accelerator Areas scheduled"""
+    num_acc = {'LEBT': 0, 'MEBT': 0, 'SEBT': 0}
+    for i in scheduled_experiments:
+        if i in exp_acc:
+            if exp_acc[i][2] == 'LEBT':
+                num_acc['LEBT'] += 1
+            elif exp_acc[i][2] == 'MEBT':
+                num_acc['MEBT'] += 1
+            else:
+                num_acc['SEBT'] += 1
+    #     else:
+    #         print(i, end="")
+    # print()
+    return num_acc
+
+
+def output_fitness(exp_priorities, num_priorities, scheduled_experiments,
+                   schedule_fields, schedule_acc, schedule_facilities, request_facilities):
     print("-" * 200)
     print("OVERVIEW OF SCHEDULE FITNESS")
     print("-" * 200)
-    print("Experiments Scheduled: " + str(len(scheduled_experiments)))
-    print("Beam requests satisfied: %d/%d, %d%%"
-          % (len(scheduled_experiments), len(exp_priorities), (100*len(scheduled_experiments)/len(exp_priorities))))
+    print('Parameter 1')
+    print("Experiments Scheduled: %d\n" % len(scheduled_experiments))
+    print('Parameter 2')
+    print("Beam requests satisfied: %d/%d, %0.2f\n"
+          % (len(scheduled_experiments), len(exp_priorities), (len(scheduled_experiments)/len(exp_priorities))))
+    print('Parameter 3:')
     print("There are %d high priority experiment(s) and %d medium priority experiment(s) scheduled."
           % (num_priorities['H'], num_priorities['M'],))
-    print("High Priority Experiments / Total Experiments: %d/%d, %d%%"
-          % (num_priorities['H'], len(scheduled_experiments), (100*num_priorities['H']/(len(scheduled_experiments)))))
+    print("High Priority Experiments / Total Experiments: %d/%d, %0.2f\n"
+          % (num_priorities['H'], len(scheduled_experiments), (num_priorities['H']/(len(scheduled_experiments)))))
+    print('Parameter 4: - WIP')
+    print('Fields Scheduled: - TODO equation to find final product\nASTRO: %d\nFSYMM: %d\nSTRUC: %d\n'
+          % (schedule_fields['ASTRO'], schedule_fields['FSYMM'], schedule_fields['STRUC']))
+    print('Parameter 5: - WIP')
+    print('Accelerator Areas Scheduled: - TODO equation to find final product\nLEBT: %d\nMEBT: %d\nSEBT: %d\n'
+          % (schedule_acc['LEBT'], schedule_acc['MEBT'], schedule_acc['SEBT']))
+    print('Parameter 6:')
+    print("There are %d different facilities scheduled out of %d, %0.2f\n"
+          % (len(schedule_facilities), len(request_facilities), (len(schedule_facilities)/len(request_facilities))))
+    print('Parameter 7: - WIP')  # BALANCE BETWEEN OLD AND NEW EXPERIMENTS TODO
 
 
 if __name__ == "__main__":
