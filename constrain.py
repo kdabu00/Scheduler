@@ -1,9 +1,39 @@
+Skip to content
+Search or jump to…
+
+Pulls
+Issues
+Marketplace
+Explore
+ 
+@kdabu00 
+kdabu00
+/
+Triumf-Scheduler
+2
+00
+Code
+Issues
+Pull requests
+1
+Actions
+Projects
+Wiki
+Security
+Insights
+More
+Triumf-Scheduler/constraint.py /
+@davidcdc
+davidcdc spelling mistake
+Latest commit d96c8be 2 minutes ago
+ History
+ 1 contributor
+149 lines (123 sloc)  6.17 KB
+  
 """
 constrain.py - WIP
 Author: Leo Liu, Kevin Dabu
-
 a program to read excel files using pandas, containing methods to check the fitness parameters of a schedule
-
 NOTE: the column headings in the schedule excel files start at row 1 which is
 the row that contains 'Cyclotron', 'BL2A', 'ISAC' etc.. so the values/axes in pandas
 include the actual column headings: 'Data', 'Exp. #', 'Facility' etc...
@@ -147,3 +177,15 @@ def check_targetblock(schedule: object):
 
 if __name__ == "__main__":
     main()
+© 2020 GitHub, Inc.
+Terms
+Privacy
+Security
+Status
+Help
+Contact GitHub
+Pricing
+API
+Training
+Blog
+About
