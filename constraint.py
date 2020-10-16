@@ -31,8 +31,8 @@ def main():
     # assign the excel data frame to schedule variable
     schedule = read_file(schedule_path)
 
-    constrain_log = check_targetblock(schedule)[1]
-    valid_schedule = check_targetblock(schedule)
+    constrain_log = check_constraints(schedule)[1]
+    valid_schedule = check_constraints(schedule)
 
     # Outputs - Will probably be made into a separate function and saved for future use
     print("-" * 100)
@@ -58,32 +58,19 @@ def ask_file_names() -> object:
     return schedule_name
 
 def findDay(date): 
-	weekday = datetime.datetime.strptime(date, '%m/%d/%Y').weekday() 
+	weekday = datetime.datetime.strptime(date, '%Y-%m-%d %H:%M:%S').weekday() 
 	return (calendar.day_name[weekday]) 
 
-"""Checks rule #4 Target blocks start and end on a Tuesday DAY shift"""
-def check_start_date(schedule: object):
-    start_date = schedule.values[2][0]
-    end_date = schedule.values[2][0]
+def check_constraints(schedule: object):
+
+    target_block_list = list()
+    combo_list = list()
+    target_block_shifts = 0
+    total_shifts_in_schedule = schedule.index.size
+    start_date = str(schedule.values[2][0])
+    end_date = str(schedule.values[2][0])
     start_shift = schedule.values[2][1]
     end_shift = schedule.values[2][1]
-
-    if findDay(start_date) == "Tuesday" and start_shift == "DAY" and findDay(end_date) == "Tuesday" and end_shift == "DAY":
-        valid_schedule = True
-    else:
-        valid_schedule = False
-        constrain_log = 'Target blocks start and end on a Tuesday DAY shift'
-    return valid_schedule, constrain_log
-
-
-def check_targetblock(schedule: object):
-    """find the target block in a schedule"""
-    target_block = ''
-    target_block_list = list()
-    target_block_shifts = 0
-    constrain_log = ''
-    combo_list = list()
-    total_shifts_in_schedule = schedule.index.size
    
     """Checks rule #1 target station and target module"""
     for i in range(schedule.index.size):
@@ -99,8 +86,6 @@ def check_targetblock(schedule: object):
         else:
             valid_schedule = False
             constrain_log = 'The Target Station/Target Module combination is fixed'
-            
-
 
     """Generate a list of all target blocks"""
     for i in range(schedule.index.size):  # schedule.index.size gets the amount of rows within the excel file
@@ -132,6 +117,14 @@ def check_targetblock(schedule: object):
                 constrain_log = 'The maximum length of a target block with UCx is 4 weeks, and other target block is 5 weeks. The minimum length of a target block is 3 weeks'
                 target_block_shifts = 0
     
+    """Checks rule #4 Target blocks start and end on a Tuesday DAY shift"""
+
+    if findDay(start_date) == "Tuesday" and start_shift == "DAY" and findDay(end_date) == "Tuesday" and end_shift == "DAY":
+        valid_schedule = True
+    else:
+        valid_schedule = False
+        constrain_log = 'Target blocks start and end on a Tuesday DAY shift'
+
     """Checks rule #6 The minimum length of the final target block in a schedule is 2 weeks """
     for i in range(len(target_block_list)-1):
         if (target_block_list[i] == target_block_list[i+1]):
@@ -143,7 +136,7 @@ def check_targetblock(schedule: object):
             target_block_shifts = 0
     
     """Checks rule #10"""
-    if (total_shifts_in_schedule-2) % 21 == 0:
+    if (total_shifts_in_schedule-1) % 21 == 0:
         valid_schedule = True
     else:
         valid_schedule = False
