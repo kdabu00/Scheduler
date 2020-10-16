@@ -37,12 +37,13 @@ def main():
     num_priorities = check_priorities(scheduled_experiments, exp_priorities)
 
     schedule_fields = check_fields(scheduled_experiments, exp_priorities)
-
     schedule_acc = check_acc(scheduled_experiments, exp_priorities)
+    acc_fitness = find_balance(schedule_acc, '', 'acc')
+    field_fitness = find_balance(schedule_fields, '', 'field')
 
     # Call output function to display fitness
     output_fitness(exp_priorities, num_priorities, scheduled_experiments,
-                   schedule_fields, schedule_acc, schedule_facilities, request_facilities)
+                   schedule_fields, field_fitness, schedule_acc, acc_fitness, schedule_facilities, request_facilities)
 
 
 def get_unique_experiments(schedule: object) -> set:
@@ -54,29 +55,21 @@ def get_unique_experiments(schedule: object) -> set:
                         'I_Exp.#', 'I_Facility', 'I_Note', 'I_West/East', 'I_Beam', 'I_Energy (keV)', 'I_Tgt',
                         'I_Source', 'I_Mod',
                         'O_Exp.#', 'O_Facility', 'O_Note', 'O_Beam', 'O_Energy (keV)', 'O_Source', 'O_Offline']
-
     # drop all rows in dataframe that had the values of index 0/row 2 in excel file
     schedule = schedule.drop(schedule.index[0])
-
     # Change nan values into empty string
     schedule = schedule.fillna('')
-
     # Ignores values in Exp. # that are equal to Exp. #, Test, Setup or empty, IGNORING Experiment S2000 *Filler exp*
     schedule = schedule.loc[(schedule['I_Exp.#'] != '') & (schedule['I_Exp.#'] != 'Test')
                             & (schedule['I_Exp.#'] != 'Setup') & (schedule['I_Exp.#'] != 'S2000')]
-
     # Change SIS/RILIS to just RILIS
     schedule['I_Source'] = schedule['I_Source'].replace(['SIS/RILIS'], 'RILIS')
-
     # Strip trailing and leading whitespace from facility column
     schedule['I_Facility'] = schedule['I_Facility'].str.strip()
-
     # Check the total amount of different facilities
     facilities = set(schedule['I_Facility'].tolist())
-
     # Make a list of each row with ISAC experiment #, Facility, Beam, Target, and Source
     unique_exp = schedule[['I_Exp.#', 'I_Facility', 'I_Beam', 'I_Tgt', 'I_Source']].values.tolist()
-
     scheduled_exp = set()
     # Store each experiment as a tuple inside of a set
     for exp in unique_exp:
@@ -102,7 +95,8 @@ def get_experiments_requested(requests: object) -> dict:
     unique_exp = unique_exp[['Experiment', 'Facility', 'Beam', 'Target', 'Ion Source']].values.tolist()
     exp_priorities = {}
     for i in range(len(unique_exp)):
-        # Turn each experiment into a tuple that will be used to ID unique experiments
+        # Turn each experiment into a tuple, this tuple will be used as a key
+        # to find unique experiments and their values
         exp_priorities[tuple(unique_exp[i])] = [priority[i], field[i], acc[i]]
     return exp_priorities, facilities
 
@@ -159,29 +153,47 @@ def check_acc(scheduled_experiments: set, exp_acc: dict) -> object:
     return num_acc
 
 
+def find_balance(schedule_dictionary, past_schedule, use_case):
+    """Finds the balance of acc areas used or fields used, desired fractions: LEBT = 50%, MEBT = 25%, SEBT = 25%"""
+    if use_case == 'acc':
+        total_acc = schedule_dictionary['LEBT'] + schedule_dictionary['MEBT'] + schedule_dictionary['SEBT']
+        deltas = [(schedule_dictionary['LEBT']/total_acc - 0.5), (schedule_dictionary['MEBT']/total_acc - 0.25),
+                  (schedule_dictionary['SEBT']/total_acc - 0.25)]
+        for i in range(len(deltas)):
+            if deltas[i] < 0:
+                deltas[i] *= -1
+        product = (1-deltas[0])*(1-deltas[1])*(1-deltas[2])
+        return round(product, 2)
+    elif use_case == 'field':
+        total_fields_past = past_schedule
+        return "not implemented yet"
+
+
 def output_fitness(exp_priorities, num_priorities, scheduled_experiments,
-                   schedule_fields, schedule_acc, schedule_facilities, request_facilities):
+                   schedule_fields, field_fitness, schedule_acc, acc_fitness, schedule_facilities, request_facilities):
     print("-" * 200)
     print("OVERVIEW OF SCHEDULE FITNESS")
     print("-" * 200)
     print('Parameter 1')
     print("Experiments Scheduled: %d\n" % len(scheduled_experiments))
     print('Parameter 2')
-    print("Beam requests satisfied: %d/%d, %0.2f\n"
+    print("Beam requests satisfied: %d/%d, Fitness: %0.2f\n"
           % (len(scheduled_experiments), len(exp_priorities), (len(scheduled_experiments)/len(exp_priorities))))
     print('Parameter 3:')
     print("There are %d high priority experiment(s) and %d medium priority experiment(s) scheduled."
           % (num_priorities['H'], num_priorities['M'],))
-    print("High Priority Experiments / Total Experiments: %d/%d, %0.2f\n"
+    print("High Priority Experiments / Total Experiments: %d/%d, Fitness: %0.2f\n"
           % (num_priorities['H'], len(scheduled_experiments), (num_priorities['H']/(len(scheduled_experiments)))))
     print('Parameter 4: - WIP')
-    print('Fields Scheduled: - TODO equation to find final product\nASTRO: %d\nFSYMM: %d\nSTRUC: %d\n'
+    print('Fields Scheduled: - TODO equation to find final product\nASTRO: %d\nFSYMM: %d\nSTRUC: %d'
           % (schedule_fields['ASTRO'], schedule_fields['FSYMM'], schedule_fields['STRUC']))
-    print('Parameter 5: - WIP')
-    print('Accelerator Areas Scheduled: - TODO equation to find final product\nLEBT: %d\nMEBT: %d\nSEBT: %d\n'
+    print('Fitness: %s\n' % field_fitness)
+    print('Parameter 5:')
+    print('Accelerator Areas Scheduled:\nLEBT: %d\nMEBT: %d\nSEBT: %d'
           % (schedule_acc['LEBT'], schedule_acc['MEBT'], schedule_acc['SEBT']))
+    print('Fitness: %0.2f\n' % acc_fitness)
     print('Parameter 6:')
-    print("There are %d different facilities scheduled out of %d, %0.2f\n"
+    print("There are %d different facilities scheduled out of %d, Fitness: %0.2f\n"
           % (len(schedule_facilities), len(request_facilities), (len(schedule_facilities)/len(request_facilities))))
     print('Parameter 7: - WIP')  # BALANCE BETWEEN OLD AND NEW EXPERIMENTS TODO
 
