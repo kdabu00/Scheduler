@@ -91,13 +91,15 @@ def check_targetblock(schedule: object):
             combo = schedule.values[i][8] + str(schedule.values[i][13])
             combo_list.append(combo)
             combo_list_2 = list(dict.fromkeys(combo_list))
-            target_combo_list = (combo_list_2[0], combo_list_2[1])
-        for i in range(combo_list):
-            if combo_list[i] in target_combo_list:
-                valid_schedule = True
-            else:
-                valid_schedule = False
-                constrain_log = 'The Target Station/Target Module combination is fixed'
+    
+    target_combo_list = (combo_list_2[0], combo_list_2[1])
+    for i in range(len(combo_list)):
+        if combo_list[i] in target_combo_list:
+            valid_schedule = True
+        else:
+            valid_schedule = False
+            constrain_log = 'The Target Station/Target Module combination is fixed'
+            
 
 
     """Generate a list of all target blocks"""
@@ -109,7 +111,7 @@ def check_targetblock(schedule: object):
             target_block_set = list(dict.fromkeys(target_block_list))
    
     """checks rule #2 if the combination of Target Station/Target Module alternates for each target block"""
-    for i in range(target_block_set -1):
+    for i in range(len(target_block_set) -1):
         if 'West' in target_block_set[i] and 'East' in target_block_set[i+1]:
             valid_schedule = True
         elif 'East' in target_block_set[i] and 'West' in target_block_set[i+1]:
@@ -141,7 +143,7 @@ def check_targetblock(schedule: object):
             target_block_shifts = 0
     
     """Checks rule #10"""
-    if (total_shifts_in_schedule-3) % 21 == 0:
+    if (total_shifts_in_schedule-2) % 21 == 0:
         valid_schedule = True
     else:
         valid_schedule = False
