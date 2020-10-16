@@ -14,6 +14,7 @@ import getpass
 import os.path
 import pandas as pd
 import datetime
+import calendar
 
 def main():
     """Main function"""
@@ -61,17 +62,18 @@ def findDay(date):
 	return (calendar.day_name[weekday]) 
 
 """Checks rule #4 Target blocks start and end on a Tuesday DAY shift"""
-def check_start_date(schedule: object)
+def check_start_date(schedule: object):
     start_date = schedule.values[2][0]
     end_date = schedule.values[2][0]
     start_shift = schedule.values[2][1]
-    start_shift = schedule.values[2][1]
-    if findDay(start_date) = "Tuesday" and start_shift = "DAY" and findDay(end_date) = "Tuesday" and end_shift = "DAY":
+    end_shift = schedule.values[2][1]
+
+    if findDay(start_date) == "Tuesday" and start_shift == "DAY" and findDay(end_date) == "Tuesday" and end_shift == "DAY":
         valid_schedule = True
     else:
         valid_schedule = False
         constrain_log = 'Target blocks start and end on a Tuesday DAY shift'
-
+    return valid_schedule, constrain_log
 
 
 def check_targetblock(schedule: object):
@@ -81,6 +83,7 @@ def check_targetblock(schedule: object):
     target_block_shifts = 0
     constrain_log = ''
     combo_list = list()
+    total_shifts_in_schedule = schedule.index.size
    
     """Checks rule #1 target station and target module"""
     for i in range(schedule.index.size):
@@ -138,7 +141,6 @@ def check_targetblock(schedule: object):
             target_block_shifts = 0
     
     """Checks rule #10"""
-    total_shifts_in_schedule = schedule.index.size 
     if (total_shifts_in_schedule-3) % 21 == 0:
         valid_schedule = True
     else:
