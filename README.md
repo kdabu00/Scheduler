@@ -1,1 +1,3 @@
-# Rule 1, 2, 3, 4, 5, 6, 7, 10 are done 
+# TRIUMF-Scheduler
+Genetic Algorithm Scheduler program for TRIUMF Beam Accelerator
+Coded in Python, uses pandas library
