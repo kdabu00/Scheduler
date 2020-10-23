@@ -23,10 +23,10 @@ def main():
 
     # I placed my excel files in C:\Users\USERNAME\Documents. Note: depending on where the file is *change*
 
-    schedule_files = [f for f in os.listdir('C:\\Users\\kevin\\Documents\\Schedules')
-                                  if os.path.isfile(os.path.join('C:\\Users\\kevin\\Documents\\Schedules', f))]
-    request_file = [f for f in os.listdir('C:\\Users\\kevin\\Documents\\Requests')
-                                  if os.path.isfile(os.path.join('C:\\Users\\kevin\\Documents\\Requests', f))]
+    schedule_files = [f for f in os.listdir('C:\\Users\\' + user + '\\Documents\\Schedules')
+                                  if os.path.isfile(os.path.join('C:\\Users\\' + user + '\\Documents\\Schedules', f))]
+    request_file = [f for f in os.listdir('C:\\Users\\' + user + '\\Documents\\Requests')
+                                  if os.path.isfile(os.path.join('C:\\Users\\' + user + '\\Documents\\Requests', f))]
 
     # keeps track of fitness of each schedule
     fitness_dict = {}
@@ -64,8 +64,10 @@ def main():
 
     # takes top 5 schedules!
     fitness_dict = {k: v for k, v in sorted(fitness_dict.items(), key=lambda item: item[1][0], reverse=True)[:5]}
+    print("Test to see if sorted properly")
     for schedule in fitness_dict:
         fm.write_fitness(fitness_dict[schedule][1], schedule + ".xlsx")
+        print(fitness_dict[schedule][0])
 
     # When a schedule is selected? not quite sure how yet update data stored in csv files
     # update_data(fitness_dict[schedule_name][2], fitness_dict[schedule_name][3])

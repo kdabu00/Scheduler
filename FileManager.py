@@ -6,9 +6,11 @@ and has a prompt for file names
 
 WIP
 """
-
+import getpass
 import pandas as pd
 import csv
+
+user = getpass.getuser()
 
 
 def read_file(path: str) -> object:
@@ -69,6 +71,6 @@ def read_data(filename, use):
 
 
 def write_fitness(text, filename):
-    with open('C:\\Users\\kevin\\Documents\\Schedules\\Fitness\\' + filename + '_FITNESS.txt', 'w') as the_file:
+    with open('C:\\Users\\' + user + '\\Documents\\Schedules\\Fitness\\' + filename + '_FITNESS.txt', 'w') as the_file:
         the_file.write(text)
 
