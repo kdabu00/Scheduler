@@ -1,5 +1,5 @@
 """
-FitnessChecker.py - WIP (REQUIRES MORE COMMENTS)
+FitnessChecker.py - WIP (REQUIRES MORE COMMENTS/Refactoring)
 Author: Kevin Dabu
 
 a program to read excel files using pandas, containing methods to check the fitness parameters of a schedule
@@ -10,7 +10,6 @@ include the actual column headings: 'Data', 'Exp. #', 'Facility' etc...
 THIS IS NOT THE SAME FOR THE REQUESTS
 """
 
-import getpass
 import os
 import FileManager as fm
 from typing import List
@@ -19,22 +18,19 @@ from typing import List
 def main():
     """Main function"""
     # gets the current logged in user's name
-    user = getpass.getuser()
 
-    # I placed my excel files in C:\Users\USERNAME\Documents. Note: depending on where the file is *change*
-
-    schedule_files = [f for f in os.listdir('C:\\Users\\' + user + '\\Documents\\Schedules')
-                                  if os.path.isfile(os.path.join('C:\\Users\\' + user + '\\Documents\\Schedules', f))]
-    request_file = [f for f in os.listdir('C:\\Users\\' + user + '\\Documents\\Requests')
-                                  if os.path.isfile(os.path.join('C:\\Users\\' + user + '\\Documents\\Requests', f))]
+    schedule_files = [f for f in os.listdir(os.path.join(os.getcwd(), 'Schedules'))
+                                  if os.path.isfile(os.path.join(os.getcwd(), 'Schedules', f))]
+    request_file = [f for f in os.listdir(os.path.join(os.getcwd(), 'Requests'))
+                                  if os.path.isfile(os.path.join(os.getcwd(), 'Requests', f))]
 
     # keeps track of fitness of each schedule
     fitness_dict = {}
 
     for schedule_name in schedule_files:
         # assign the excel data frame to respective variable
-        schedule = fm.read_file('C:\\Users\\'+ user +'\\Documents\\Schedules\\' + schedule_name)
-        requests = fm.read_file('C:\\Users\\'+ user +'\\Documents\\Requests\\' + request_file[0])
+        schedule = fm.read_file(os.path.join(os.getcwd(), 'Schedules', schedule_name))
+        requests = fm.read_file(os.path.join(os.getcwd(), 'Requests', request_file[0]))
 
         # Find unique scheduled experiments and requested experiments w/priorities
         schedule_experiments, schedule_facilities = get_unique_experiments(schedule)
@@ -64,10 +60,10 @@ def main():
 
     # takes top 5 schedules!
     fitness_dict = {k: v for k, v in sorted(fitness_dict.items(), key=lambda item: item[1][0], reverse=True)[:5]}
-    print("Test to see if sorted properly")
+    print("Test to see if fitness is sorted properly")
     for schedule in fitness_dict:
         fm.write_fitness(fitness_dict[schedule][1], schedule + ".xlsx")
-        print(fitness_dict[schedule][0])
+        print(schedule + ': ', fitness_dict[schedule][0])
 
     # When a schedule is selected? not quite sure how yet update data stored in csv files
     # update_data(fitness_dict[schedule_name][2], fitness_dict[schedule_name][3])
@@ -253,7 +249,6 @@ def update_data(exps: set, fields: dict) -> None:
 
 def calculate_total_fitness(schedule_experiments, exp_requested, num_priorities, schedule_facilities,
                             request_facilities, field, acc, time, shifts):
-    text = ''
     t = len(schedule_experiments)
     h = num_priorities['H'] / t
     req = t / len(exp_requested)

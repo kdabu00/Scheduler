@@ -6,11 +6,10 @@ and has a prompt for file names
 
 WIP
 """
-import getpass
+
 import pandas as pd
 import csv
-
-user = getpass.getuser()
+import os
 
 
 def read_file(path: str) -> object:
@@ -53,7 +52,7 @@ def save_data(data, filename):
 
 def read_data(filename, use):
     """Reads csv, depending on use either reads data into a set or reads data into a dictionary"""
-    with open('C:\\Users\\kevin\\Documents\\' + filename) as csvfile:
+    with open(os.path.join(os.getcwd(),  filename)) as csvfile:
         read_csv = csv.reader(csvfile, delimiter=',')
         if use == 'exp':
             data = set()
@@ -63,14 +62,10 @@ def read_data(filename, use):
             data = {}
             for row in read_csv:
                 data[row[0]] = int(row[1])
-        # elif use == 'old_new':
-        #     data = []
-        #     for row in read_csv:
-        #         data.append([int(row[0]), int(row[1])])
         return data
 
 
 def write_fitness(text, filename):
-    with open('C:\\Users\\' + user + '\\Documents\\Schedules\\Fitness\\' + filename + '_FITNESS.txt', 'w') as the_file:
+    with open(os.path.join(os.getcwd(), 'Schedules', 'Fitness', filename + '_FITNESS.txt'), 'w') as the_file:
         the_file.write(text)
 
