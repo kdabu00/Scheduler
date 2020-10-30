@@ -12,27 +12,17 @@ import csv
 import os
 
 
-def read_file(path: str) -> object:
+def read_file(folder_name: str, file_name: str) -> object:
     """Open excel schedule, displays contents turns excel file into a data frame: schedule"""
-    excel_file = pd.read_excel(path)  # first index: row, second index: column ex. schedule.values[0][0] == 'Date'
+    excel_file = pd.read_excel(os.path.join(os.getcwd(), folder_name, file_name))
     return excel_file
 
 
-def write_file():
-    """Creates an excel file from a data frame"""
-    pass
-
-
-def update_file():
-    """Updates an excel file's values"""
-    pass
-
-
-def ask_file_names() -> object:
-    """Prompts user for file names for requests and schedules, then returns them"""
-    schedule_name = input("Input schedule file name (Schedule 138 Ancestor.xlsx): ")
-    requests_name = input("Input beam requests file (Schedule 138 Beam Requests.xlsx): ")
-    return schedule_name, requests_name
+def get_files(folder_name: str) -> list:
+    """Returns the names of all files within in a folder located in the program directory"""
+    files = [f for f in os.listdir(os.path.join(os.getcwd(), folder_name))
+             if os.path.isfile(os.path.join(os.getcwd(), folder_name, f))]
+    return files
 
 
 def save_data(data, filename):
@@ -45,9 +35,6 @@ def save_data(data, filename):
         elif filename == 'fields.csv':
             for key in data:
                 csv_out.writerow((key, data[key]))
-        # elif filename == 'old_new.csv':
-        #     for val in data:
-        #         csv_out.writerow(val)
 
 
 def read_data(filename, use):
@@ -68,4 +55,3 @@ def read_data(filename, use):
 def write_fitness(text, filename):
     with open(os.path.join(os.getcwd(), 'Schedules', 'Fitness', filename + '_FITNESS.txt'), 'w') as the_file:
         the_file.write(text)
-
