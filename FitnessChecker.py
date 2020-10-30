@@ -10,7 +10,7 @@ include the actual column headings: 'Data', 'Exp. #', 'Facility' etc...
 THIS IS NOT THE SAME FOR THE REQUESTS
 """
 
-from ScheduleTest import Schedule
+from Schedule import Schedule
 from Request import Request
 from ScheduleManager import ScheduleManager
 import FileManager as fm
@@ -18,8 +18,13 @@ import FileManager as fm
 
 def run_check():
     """Main function"""
+    # defines ScheduleManager Class
     sm = ScheduleManager('Schedules')
+
+    # Grabs all files in Schedules Directory
     schedule_files = fm.get_files('Schedules')
+
+    # Grabs all files in the Requests Directory
     request_file = fm.get_files('Requests')
 
     for i in range(len(schedule_files)):
@@ -38,22 +43,36 @@ def run_check():
         schedule.set_acc(check_acc(schedule.experiments, request.experiments))
 
         # Fitness checks
-        acc_fitness = find_balance(schedule.acc, 'acc')
-        field_fitness = find_balance(schedule.fields, 'field')
-        schedule.set_fitness(calculate_total_fitness(schedule.experiments,
-                                request.experiments, schedule.priorities, sm.schedules[i].facilities,
-                                request.facilities, field_fitness, acc_fitness, schedule.shifts))
+        schedule.set_fitness(calculate_total_fitness(request, schedule))
 
+        # Generates output
         schedule.set_output(output_fitness(schedule_files[i].replace('.xlsx', ''),
-                              request.experiments, schedule.priorities, sm.schedules[i].experiments,
-                              schedule.fields, field_fitness, schedule.acc, acc_fitness,
-                              schedule.facilities, request.facilities, schedule.fitness))
+                            request.experiments, schedule.priorities, schedule.experiments,
+                            schedule.fields, schedule.parameters['fields'], schedule.acc,
+                            schedule.parameters['acc'], schedule.facilities, request.facilities, schedule.fitness))
 
     # sorts the schedules in the schedule manager by fitness values
     sm.sort_by_fitness()
 
-    for schedule in sm.schedules:
+    for schedule in sm.schedules[:5]:
          fm.write_fitness(schedule.output, schedule.file_name)
+
+
+def calculate_total_fitness(request, schedule):
+    """Calculates the total fitness using the formula given, sets each parameter to a dictionary in the schedule obj"""
+    total_exp = (6 * len(schedule.experiments)) / schedule.shifts
+    priority = schedule.priorities['H'] / len(schedule.experiments)
+    s_exp_vs_r_exp = len(schedule.experiments) / len(request.experiments)
+    fields = find_balance(schedule.fields, 'field')
+    acc = find_balance(schedule.acc, 'acc')
+    s_fac_vs_r_fac = len(schedule.facilities) / len(request.facilities)
+
+    schedule.set_fitness_parameters(total_exp, priority, s_exp_vs_r_exp,
+                                    fields, acc, s_fac_vs_r_fac)
+    fitness = 1
+    for key in schedule.parameters:
+        fitness *= schedule.parameters[key]
+    return fitness
 
 
 def check_priorities(scheduled_experiments: set, exp_priorities: dict) -> object:
@@ -98,24 +117,27 @@ def check_acc(scheduled_experiments: set, exp_acc: dict) -> object:
     return num_acc
 
 
-def find_balance(schedule_obj, use_case):
+def find_balance(schedule, use_case):
     """Finds the balance of acc areas used or fields used, desired fractions: LEBT = 50%, MEBT = 25%, SEBT = 25%"""
     if use_case == 'acc':
-        total_acc = schedule_obj['LEBT'] + schedule_obj['MEBT'] + schedule_obj['SEBT']
-        deltas = [(schedule_obj['LEBT'] / total_acc - 0.5), (schedule_obj['MEBT'] / total_acc - 0.25),
-                  (schedule_obj['SEBT'] / total_acc - 0.25)]
+        total_acc = schedule['LEBT'] + schedule['MEBT'] + schedule['SEBT']
+        deltas = [(schedule['LEBT'] / total_acc - 0.5), (schedule['MEBT'] / total_acc - 0.25),
+                  (schedule['SEBT'] / total_acc - 0.25)]
+
         for i in range(len(deltas)):
             if deltas[i] < 0:
                 deltas[i] *= -1
         product = (1-deltas[0])*(1-deltas[1])*(1-deltas[2])
         return product
+
     elif use_case == 'field':
         old_fields = fm.read_data('fields.csv', 'field')
         total_fields_past = old_fields['ASTRO'] + old_fields['STRUC'] + old_fields['FSYMM']
-        total_fields_current = schedule_obj['ASTRO'] + schedule_obj['FSYMM'] + schedule_obj['STRUC']
-        deltas = [(schedule_obj['ASTRO'] / total_fields_current - old_fields['ASTRO'] / total_fields_past),
-                  (schedule_obj['FSYMM'] / total_fields_current - old_fields['FSYMM'] / total_fields_past),
-                  (schedule_obj['STRUC'] / total_fields_current - old_fields['STRUC'] / total_fields_past)]
+        total_fields_current = schedule['ASTRO'] + schedule['FSYMM'] + schedule['STRUC']
+        deltas = [(schedule['ASTRO'] / total_fields_current - old_fields['ASTRO'] / total_fields_past),
+                  (schedule['FSYMM'] / total_fields_current - old_fields['FSYMM'] / total_fields_past),
+                  (schedule['STRUC'] / total_fields_current - old_fields['STRUC'] / total_fields_past)]
+
         for i in range(len(deltas)):
             if deltas[i] < 0:
                 deltas[i] *= -1
@@ -126,7 +148,7 @@ def find_balance(schedule_obj, use_case):
 def update_data(exps: set, fields: dict) -> None:
     """
     This should only be ran when an experiment meets required fitness levels,
-    and is chosen as a schedule to be used
+    and is chosen as a schedule to be used - WIP
     """
     old_exp = fm.read_data('past_experiments.csv', 'exp')
     old_fields = fm.read_data('fields.csv', 'field')
@@ -141,23 +163,11 @@ def update_data(exps: set, fields: dict) -> None:
     fm.save_data(old_fields, 'fields.csv')
 
 
-def calculate_total_fitness(schedule_experiments, exp_requested, num_priorities, schedule_facilities,
-                            request_facilities, field, acc, shifts):
-    """Calculates the total fitness using the formula given to us"""
-    t = len(schedule_experiments)
-    h = num_priorities['H'] / t
-    req = t / len(exp_requested)
-    d = len(schedule_facilities) / len(request_facilities)
-    fitness = ((6*t/shifts) * h * req * field * acc * d)
-    return fitness
-
-
 def output_fitness(filename, exp_requested, num_priorities, scheduled_experiments,
                    schedule_fields, field_fitness, schedule_acc, acc_fitness,
                    schedule_facilities, request_facilities, total_fitness):
     """Outputs fitness values to the console, TODO Make this look better...."""
-    text = ''
-    text += "%s\nFITNESS OVERVIEW: %s\n%s\nParameter 1: Total Experiments\nExperiments Scheduled: %d\n" %\
+    text = "%s\nFITNESS OVERVIEW: %s\n%s\nParameter 1: Total Experiments\nExperiments Scheduled: %d\n" %\
             (('-' * 60), filename, ('-' * 60), len(scheduled_experiments))
     text += "\nParameter 2: High-Priority vs Experiments Scheduled\nThere are %d high priority experiment(s) " %\
             num_priorities['H']
