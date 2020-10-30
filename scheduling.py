@@ -40,14 +40,23 @@ def ask_file_names() -> object:
 
 def get_expirment_from_isac(requests: object):
     """"""
-    return
+    pass
     
 def get_required_shifts(requests: object, row_number):
     required_shifts = requests.values[row_number-2][4]    
     return required_shifts 
 
 def set_ts_tm(requests: object):
-    return
+    pass
+
+def sort_target_block(requests: object):
+    pass
+
+def set_date():
+    pass
+
+def add_shift():
+    pass
 
 if __name__ == "__main__":
     main()
