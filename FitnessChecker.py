@@ -10,7 +10,7 @@ include the actual column headings: 'Data', 'Exp. #', 'Facility' etc...
 THIS IS NOT THE SAME FOR THE REQUESTS
 """
 
-from ScheduleTest import Schedule
+from Schedule import Schedule
 from Request import Request
 from ScheduleManager import ScheduleManager
 import FileManager as fm
@@ -18,8 +18,12 @@ import FileManager as fm
 
 def run_check():
     """Main function"""
+    # defines ScheduleManager Class
     sm = ScheduleManager('Schedules')
+
+    # Grabs all files in Schedules Directory
     schedule_files = fm.get_files('Schedules')
+    # Grabs all files in the Requests Directory
     request_file = fm.get_files('Requests')
 
     for i in range(len(schedule_files)):
@@ -38,22 +42,39 @@ def run_check():
         schedule.set_acc(check_acc(schedule.experiments, request.experiments))
 
         # Fitness checks
-        acc_fitness = find_balance(schedule.acc, 'acc')
-        field_fitness = find_balance(schedule.fields, 'field')
-        schedule.set_fitness(calculate_total_fitness(schedule.experiments,
-                                request.experiments, schedule.priorities, sm.schedules[i].facilities,
-                                request.facilities, field_fitness, acc_fitness, schedule.shifts))
+        total_exp = (6*len(schedule.experiments))/schedule.shifts
+        priority = schedule.priorities['H']/len(schedule.experiments)
+        s_exp_vs_r_exp = len(schedule.experiments)/len(request.experiments)
+        fields = find_balance(schedule.fields, 'field')
+        acc = find_balance(schedule.acc, 'acc')
+        s_fac_vs_r_fac = len(schedule.facilities)/len(request.facilities)
 
+        # set fitness parameters to schedule object
+        schedule.set_fitness_parameters(total_exp, priority, s_exp_vs_r_exp,
+                                                     fields, acc, s_fac_vs_r_fac)
+
+        # set total fitness
+        schedule.set_fitness(calculate_total_fitness(schedule.parameters))
+
+        # Generates output
         schedule.set_output(output_fitness(schedule_files[i].replace('.xlsx', ''),
                               request.experiments, schedule.priorities, sm.schedules[i].experiments,
-                              schedule.fields, field_fitness, schedule.acc, acc_fitness,
+                              schedule.fields, fields, schedule.acc, acc,
                               schedule.facilities, request.facilities, schedule.fitness))
 
     # sorts the schedules in the schedule manager by fitness values
     sm.sort_by_fitness()
 
-    for schedule in sm.schedules:
+    for schedule in sm.schedules[:5]:
          fm.write_fitness(schedule.output, schedule.file_name)
+
+
+def calculate_total_fitness(dict):
+    """Calculates the total fitness using the formula given to us"""
+    fitness = 1
+    for key in dict:
+        fitness *= dict[key]
+    return fitness
 
 
 def check_priorities(scheduled_experiments: set, exp_priorities: dict) -> object:
@@ -141,23 +162,11 @@ def update_data(exps: set, fields: dict) -> None:
     fm.save_data(old_fields, 'fields.csv')
 
 
-def calculate_total_fitness(schedule_experiments, exp_requested, num_priorities, schedule_facilities,
-                            request_facilities, field, acc, shifts):
-    """Calculates the total fitness using the formula given to us"""
-    t = len(schedule_experiments)
-    h = num_priorities['H'] / t
-    req = t / len(exp_requested)
-    d = len(schedule_facilities) / len(request_facilities)
-    fitness = ((6*t/shifts) * h * req * field * acc * d)
-    return fitness
-
-
 def output_fitness(filename, exp_requested, num_priorities, scheduled_experiments,
                    schedule_fields, field_fitness, schedule_acc, acc_fitness,
                    schedule_facilities, request_facilities, total_fitness):
     """Outputs fitness values to the console, TODO Make this look better...."""
-    text = ''
-    text += "%s\nFITNESS OVERVIEW: %s\n%s\nParameter 1: Total Experiments\nExperiments Scheduled: %d\n" %\
+    text = "%s\nFITNESS OVERVIEW: %s\n%s\nParameter 1: Total Experiments\nExperiments Scheduled: %d\n" %\
             (('-' * 60), filename, ('-' * 60), len(scheduled_experiments))
     text += "\nParameter 2: High-Priority vs Experiments Scheduled\nThere are %d high priority experiment(s) " %\
             num_priorities['H']

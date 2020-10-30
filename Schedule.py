@@ -3,7 +3,6 @@ Schedule.py
 Author: Kevin Dabu
 Date: OCT.29 2020
 This file contains the basic methods and attributes of a schedule for the TRIUMF Scheduler
-- WIP
 """
 
 
@@ -18,6 +17,7 @@ class Schedule:
         self.acc = None
         self.output = None
         self.fitness = None
+        self.parameters = None
         self.is_valid = False
 
     @property
@@ -62,19 +62,13 @@ class Schedule:
     def isvalid(self):
         return self.is_valid
 
-    @property
-    def total_experiments(self):
-        """Returns the total amount of experiments in the schedule"""
-        return len(self.experiments)
-
-    @property
-    def get_fitness_parameters(self):
-        return {'priority': self.priorities,
-                'fields': self.fields,
-                'acc': self.acc,
-                'exp': self.experiments,
-                'facilities': self.facilities,
-                'shifts': self.shifts}
+    def set_fitness_parameters(self, total_exp, priority, requests, fields, acc, fac):
+        self.parameters = {'total_exp': total_exp,
+                            'priority': priority,
+                            'requests': requests,
+                            'fields': fields,
+                            'acc': acc,
+                            'fac': fac}
 
     def set_priorities(self, var):
         self.priorities = var
@@ -89,7 +83,7 @@ class Schedule:
         self.output = var
 
     def validate(self):
-        """Changes valid boolean attribute"""
+        """Changes is_valid to true"""
         self.is_valid = True
 
     def set_fitness(self, var):
