@@ -151,10 +151,23 @@ def add_shift(row_number):
     return shift_name
 
 def create_data_frame():
-    pass
+    """Import values from excel file and creates a dataframe in python based on imported values"""
+    data = pd.read_excel(r "C:\\Users", user, "Documents", requests_name)
+    # for csv files use code below
+    # data = pd.read_csv(r "C:\\Users", user, "Documents", requests_name)
+    df = pd.DataFrame(data, columns = ['Experiments', 'Priority', 'Facility', 'Beam options', 'Shifts requested', 
+    'Target', 'Ion Source', 'Beam', 'Field', 'Acc Area'])
+    # can use xls in code line above if using earlier version of excel
+    # need to use command 'pip install xlrd' for Excel file support
+    # xlrd need to be version 1.0.0 or up
+
+    print(df)
 
 def write_to_excel():
-    pass
+    df.to_excel (r "C:\\Users", user, "Documents", requests_name, index = False, header=True)
+    # for csv files use below line
+    # df.to_csv (r "C:\\Users", user, "Documents", requests_name, index = False, header=True)
+
 
 if __name__ == "__main__":
     main()
