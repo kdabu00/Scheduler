@@ -3,57 +3,35 @@ import os.path
 import pandas as pd
 from datetime import datetime
 import calendar
+from Schedule import Schedule
+from Request import Request
+import FileManager as fm
 
 def main():
     """Main function"""
-
-    # gets the current logged in user's name
-    user = getpass.getuser()
-
-    # Grabs filename input from user
-    requests_name = ask_file_names()
-
-    # I placed my excel files in C:\Users\USERNAME\Documents. Note: depending on where the file is *change*
-    requests_path = os.path.join("C:\\Users", user, "Documents", requests_name)
-
-    # assign the excel data frame to requests variable
-    requests = read_file(requests_path)
-    isac_requests = get_expirment_from_isac(requests)
-    requests_sort_by_tb = sort_by_target_block(isac_requests)
+    request_file = fm.get_files('Requests')
+    requests = fm.read_file('Requests', request_file[0])
+    requests = Request(request_file[0], requests)
+    requests_sort_by_tb = sort_by_target_block(requests)
     # Outputs - Will probably be made into a separate function and saved for future use
     print("-" * 100)
     print("OVERVIEW OF REQUEST")
     print("-" * 100)
     print(requests_sort_by_tb)
-
-def read_file(path: str) -> object:
-    """Open excel requests, displays contents turns excel file into a data frame: requests"""
-    pd.set_option('display.max_rows', None)
-    pd.set_option('display.max_columns', None)
-    excel_file = pd.read_excel(path)  # first index: row, second index: column ex. schedule.values[0][0] == 'Date'
-    return excel_file
-
-def ask_file_names() -> object:
-    """Prompts user for file names for requests and schedules, then returns them"""
-    requests_name = input("Input requests file name (Schedule 138 Beam Requests.xlsx): ")
-    return requests_name
-
-def get_expirment_from_isac(requests: object):
-    """get the data frame which only contain the ISAC experiment"""
-    isac_request = requests.loc[(requests['Beam options'] == 'ISAC Target (RIB)')]
-    return isac_request
-    
+'''    
 def get_required_shifts(requests: object, row_number):
     required_shifts = requests.values[row_number-2][4]    
     return required_shifts 
+    request.required_shifts
 
 def get_expirment_number(requests: object, row_number):
     exp_num = requests.values[row_number-2][0]
     return exp_num
-
+    request.expirment_number
+'''
 def sort_by_target_block(requests: object):
     """group by source then group by target type"""
-    requests_sort_by_tb = requests.sort_values(by=['Ion Source', 'Target'])
+    requests_sort_by_tb = requests.request.sort_values(by=['Ion Source', 'Target'])
     return requests_sort_by_tb
 
 def set_ts_tm(requests: object, combo):
@@ -72,7 +50,7 @@ def set_ts_tm(requests: object, combo):
     return ts,tm
 
 def set_date(row_number):
-    year_now = datetime.datetime.now().year
+    # year_now = datetime.datetime.now().year
     date_list = []
     if row_number == 1 or row_number == 2 or row_number == 3:
         string_2021 = "25/4/2021"
@@ -151,9 +129,22 @@ def add_shift(row_number):
     return shift_name
 
 def create_data_frame():
+    """Import values from excel file and creates a dataframe in python based on imported values"""
+    # data = pd.read_excel(r "C:\\Users", user, "Documents", requests_name)
+    # for csv files use code below
+    # data = pd.read_csv(r "C:\\Users", user, "Documents", requests_name)
+    # df = pd.DataFrame(data, columns = ['Experiments', 'Priority', 'Facility', 'Beam options', 'Shifts requested', 
+    # Target', 'Ion Source', 'Beam', 'Field', 'Acc Area'])
+    # can use xls in code line above if using earlier version of excel
+    # need to use command 'pip install xlrd' for Excel file support
+    # xlrd need to be version 1.0.0 or up
+    # return df
     pass
 
 def write_to_excel():
+    # df.to_excel (r path, requests_name, index = False, header=True)
+    # for csv files use below line
+    # df.to_csv (r "C:\\Users", user, "Documents", requests_name, index = False, header=True)
     pass
 
 if __name__ == "__main__":
