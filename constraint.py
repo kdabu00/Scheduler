@@ -100,9 +100,9 @@ def get_number_of_unsatisfied_constraints(bools_list):
 def check_tb_start_time(schedule: object):
     """Checks rule #4 Target blocks start and end on a Tuesday DAY shift"""
     start_date = str(schedule.values[2][0])
-    end_date = str(schedule.values[2][0])
+    end_date = str(schedule.values[549][0])
     start_shift = schedule.values[2][1]
-    end_shift = schedule.values[2][1]
+    end_shift = schedule.values[549][1]
     constraint_log = ""
     if findDay(start_date) == "Tuesday" and start_shift == "DAY" and findDay(end_date) == "Tuesday" and end_shift == "DAY":
         valid_schedule = True
