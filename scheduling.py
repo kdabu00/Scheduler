@@ -6,18 +6,22 @@ import calendar
 from Schedule import Schedule
 from Request import Request
 import FileManager as fm
+import numpy as np
+from random import random
 
 def main():
     """Main function"""
     request_file = fm.get_files('Requests')
     requests = fm.read_file('Requests', request_file[0])
     requests = Request(request_file[0], requests)
-    requests_sort_by_tb = sort_by_target_block(requests)
+    requests_sort_by_tb = requests.request.request_sort_by_tb
     # Outputs - Will probably be made into a separate function and saved for future use
     print("-" * 100)
     print("OVERVIEW OF REQUEST")
     print("-" * 100)
-    print(requests_sort_by_tb)
+    # print(requests_sort_by_tb)
+    # write_to_excel(requests)
+    
 '''    
 def get_required_shifts(requests: object, row_number):
     required_shifts = requests.values[row_number-2][4]    
@@ -28,25 +32,29 @@ def get_expirment_number(requests: object, row_number):
     exp_num = requests.values[row_number-2][0]
     return exp_num
     request.expirment_number
-'''
+
 def sort_by_target_block(requests: object):
     """group by source then group by target type"""
     requests_sort_by_tb = requests.request.sort_values(by=['Ion Source', 'Target'])
     return requests_sort_by_tb
-
-def set_ts_tm(requests: object, combo):
-    if combo == "w2":
+'''
+def set_ts_tm():
+    combo = "west2_east4"
+    # combo = "west4_east2"
+    random_num = random.randint(0, 1)
+    if random_num == 0 and combo == "west2_east4":
         ts = "West"
         tm = 2
-    elif combo == "e2":
+    elif random_num == 1 and combo == "west2_east4":
         ts = "East"
-        tm = 2
-    elif combo == "w4":
+        tm = 4
+    elif random_num == 0 and combo == "west4_east2":
         ts = "West"
         tm = 4
-    elif combo == "e4":
+    elif random_num == 1 and combo == "west4_east2":
         ts = "East"
-        tm = 4
+        tm = 2
+    
     return ts,tm
 
 def set_date(row_number):
@@ -128,24 +136,18 @@ def add_shift(row_number):
             shift_name = "EVE"
     return shift_name
 
-def create_data_frame():
+def create_data_frame(class_name):
     """Import values from excel file and creates a dataframe in python based on imported values"""
-    # data = pd.read_excel(r "C:\\Users", user, "Documents", requests_name)
-    # for csv files use code below
-    # data = pd.read_csv(r "C:\\Users", user, "Documents", requests_name)
-    # df = pd.DataFrame(data, columns = ['Experiments', 'Priority', 'Facility', 'Beam options', 'Shifts requested', 
-    # Target', 'Ion Source', 'Beam', 'Field', 'Acc Area'])
-    # can use xls in code line above if using earlier version of excel
-    # need to use command 'pip install xlrd' for Excel file support
-    # xlrd need to be version 1.0.0 or up
-    # return df
-    pass
+    data_array = []
+    for i in range (546):
+        row = [[i],set_date(i),add_shift(i), '', '', '', class_name.expirment_number[i], class_name.facilitie[i], '', set_ts_tm()[0], class_name.beam[i], '', class_name.target_type[i], class_name.source[i], set_ts_tm()[1]],
+        data_array.append(row)     
+    df =  pd.DataFrame(data_array, columns = ['','Date','Shift','Offine','current (uA)', 'Offline', 'Exp. #', 'Facility', 'Note', 'West / East', 'Beam', 'Energy (keV)', 'Tgt', 'Source', 'Mod'])  
+    return df
 
-def write_to_excel():
-    # df.to_excel (r path, requests_name, index = False, header=True)
-    # for csv files use below line
-    # df.to_csv (r "C:\\Users", user, "Documents", requests_name, index = False, header=True)
-    pass
+def write_to_excel(class_name):
+    df = create_data_frame(class_name)
+    df.to_excel ("initial_schedule.xlsx", index = False, header=True)
 
 if __name__ == "__main__":
     main()

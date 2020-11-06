@@ -12,7 +12,7 @@ class Request:
         """Creates an instance of the request class"""
         self.name = name
         self.request = refactor_request(request)
-        self.request_sort_by_tb= sort_by_target_block(request)
+        self.request_sort_by_tb = sort_by_target_block(request)
         self.request_repeat = repeat_request_by_shift(request)
 
     @property
@@ -37,12 +37,28 @@ class Request:
         return set(self.request['Facility'].tolist())
     
     @property
+    def facilitie(self):
+        return set(self.request_repeat['Facility'].tolist())
+    
+    @property
     def required_shifts(self):
-        return set(self.request['Shifts requested'].tolist())
+        return set(self.request_repeat['Shifts requested'].tolist())
     
     @property
     def expirment_number(self):
-        return set(self.request['Experiment'].tolist())
+        return set(self.request_repeat['Experiment'].tolist())
+
+    @property
+    def beam(self):
+        return set(self.request_repeat['Beam'].tolist())
+
+    @property
+    def target_type(self):
+        return set(self.request_repeat['Target'].tolist())
+    
+    @property
+    def source(self):
+        return set(self.request_repeat['Ion Source'].tolist())
 
 def refactor_request(request):
     # Check if a request is an ISAC experiment and if the Experiment # is not Test
