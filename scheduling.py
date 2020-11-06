@@ -19,7 +19,7 @@ def main():
     print("-" * 100)
     print("OVERVIEW OF REQUEST")
     print("-" * 100)
-    # print(requests_sort_by_tb)
+    print(requests_sort_by_tb)
     # write_to_excel(requests)
     
 '''    

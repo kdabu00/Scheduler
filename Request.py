@@ -81,7 +81,8 @@ def repeat_request_by_shift(request):
     # Get the request repeat by shift
     shift_requested_list = requests_sort_by_tb['Shifts requested'].tolist()
     for i in range(requests_sort_by_tb.index.size):
-        df_row = requests_sort_by_tb[i+1]
-        temporary_table = requests_sort_by_tb.append(df_row*shift_requested_list[i+1])
+        df_row = requests_sort_by_tb.values[i+1]
+        #for j in range (int(shift_requested_list[i])):
+            #temporary_table = requests_sort_by_tb.values.append(df_row)
     request_repeat = temporary_table.sort_values(by=['Ion Source', 'Target'])
     return request_repeat
