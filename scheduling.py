@@ -2,6 +2,7 @@ import getpass
 import os.path
 import pandas as pd
 from datetime import datetime
+from datetime import date
 import calendar
 from Schedule import Schedule
 from Request import Request
@@ -14,13 +15,13 @@ def main():
     request_file = fm.get_files('Requests')
     requests = fm.read_file('Requests', request_file[0])
     requests = Request(request_file[0], requests)
-    requests_sort_by_tb = requests.request.request_sort_by_tb
+    requests_sort_by_tb = requests.request_sort_by_tb
     # Outputs - Will probably be made into a separate function and saved for future use
     print("-" * 100)
     print("OVERVIEW OF REQUEST")
     print("-" * 100)
-    print(requests_sort_by_tb)
-    # write_to_excel(requests)
+    # print(requests_sort_by_tb)
+    write_to_excel(requests)
     
 '''    
 def get_required_shifts(requests: object, row_number):
@@ -38,7 +39,7 @@ def sort_by_target_block(requests: object):
     requests_sort_by_tb = requests.request.sort_values(by=['Ion Source', 'Target'])
     return requests_sort_by_tb
 '''
-def set_ts_tm():
+def get_ts_tm():
     combo = "west2_east4"
     # combo = "west4_east2"
     random_num = random.randint(0, 1)
@@ -57,10 +58,12 @@ def set_ts_tm():
     
     return ts,tm
 
-def set_date(row_number):
+def get_date(row_number):
     # year_now = datetime.datetime.now().year
     date_list = []
-    if row_number == 1 or row_number == 2 or row_number == 3:
+    present = datetime.now()
+    date_21 = datetime(2021, 4, 5)
+    if row_number == 0 or row_number == 1 or row_number == 2:
         string_2021 = "25/4/2021"
         string_2022 = "25/4/2022"
         string_2023 = "25/4/2023"
@@ -81,10 +84,11 @@ def set_date(row_number):
         date_2028 = datetime.strptime(string_2028, "%d/%m/%Y")
         date_2029 = datetime.strptime(string_2029, "%d/%m/%Y")
         date_2030 = datetime.strptime(string_2030, "%d/%m/%Y")
-        present = datetime.now()
-        if present.date() < date_2021():
-            date = datetime.datetime(2021, 4, 6)
-            date_list.append(date, date, date)
+        
+        if present < date_21:
+            date = str(datetime(2021, 4, 6))
+            date_list += 3 * date
+            #date_list.append(date*3)
         elif present.date() < date_2022():
             date = datetime.datetime(2022, 4, 5)
             date_list.append(date, date, date)
@@ -113,7 +117,7 @@ def set_date(row_number):
             date = datetime.datetime(2030, 4, 9)
             date_list.append(date, date, date)
     else:
-        previous_date = date_list[row_number-4]
+        previous_date = date_list[row_number-3]
         date = pd.to_datetime(previous_date) + pd.DateOffset(days=1)
         date_list.append(date, date, date)
     return date
@@ -121,17 +125,17 @@ def set_date(row_number):
 
 def add_shift(row_number):
     df_shift_list = []
-    if row_number == 1:
+    if row_number == 0:
         shift_name = "DAY"
         df_shift_list.append("DAY")
     else:
-        if df_shift_list[row_number-2] == "DAY":
+        if df_shift_list[row_number-1] == "DAY":
             df_shift_list.append("EVE")
             shift_name = "EVE"
-        elif df_shift_list[row_number-2] == "EVE":
+        elif df_shift_list[row_number-1] == "EVE":
             df_shift_list.append("OWL")
             shift_name = "EVE"
-        elif df_shift_list[row_number-2] == "OWL":
+        elif df_shift_list[row_number-1] == "OWL":
             df_shift_list.append("DAY")
             shift_name = "EVE"
     return shift_name
@@ -140,9 +144,14 @@ def create_data_frame(class_name):
     """Import values from excel file and creates a dataframe in python based on imported values"""
     data_array = []
     for i in range (546):
-        row = [[i],set_date(i),add_shift(i), '', '', '', class_name.expirment_number[i], class_name.facilitie[i], '', set_ts_tm()[0], class_name.beam[i], '', class_name.target_type[i], class_name.source[i], set_ts_tm()[1]],
+        row = [get_date(i),add_shift(i), '', '', '',
+               class_name.request.expirment_number[i], class_name.request.facilitie[i], '',
+               get_ts_tm()[0], class_name.beam[i], '', class_name.target_type[i],
+               class_name.source[i], get_ts_tm()[1]]
         data_array.append(row)     
-    df =  pd.DataFrame(data_array, columns = ['','Date','Shift','Offine','current (uA)', 'Offline', 'Exp. #', 'Facility', 'Note', 'West / East', 'Beam', 'Energy (keV)', 'Tgt', 'Source', 'Mod'])  
+    df =  pd.DataFrame(data_array, columns = ['','Date','Shift','Offine','current (uA)', 'Offline',
+                                              'Exp. #', 'Facility', 'Note', 'West / East', 'Beam',
+                                              'Energy (keV)', 'Tgt', 'Source', 'Mod'])
     return df
 
 def write_to_excel(class_name):

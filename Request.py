@@ -5,6 +5,9 @@ Date: Oct.29 2020
 
 Requests class object
 """
+import numpy as np
+import pandas as pd
+import FileManager as fm
 
 class Request:
 
@@ -71,7 +74,7 @@ def sort_by_target_block(request):
     # Group by source then group by target type
     requests_sort_by_tb = request.sort_values(by=['Ion Source', 'Target'])
     return requests_sort_by_tb
-
+'''
 def repeat_request_by_shift(request):
     # Get request is an ISAC experiment
     request = request.loc[(request['Beam options'] == 'ISAC Target (RIB)') & (request['Experiment'] != 'Test')]
@@ -81,8 +84,36 @@ def repeat_request_by_shift(request):
     # Get the request repeat by shift
     shift_requested_list = requests_sort_by_tb['Shifts requested'].tolist()
     for i in range(requests_sort_by_tb.index.size):
-        df_row = requests_sort_by_tb.values[i+1]
-        #for j in range (int(shift_requested_list[i])):
-            #temporary_table = requests_sort_by_tb.values.append(df_row)
+        df_row = np.array(requests_sort_by_tb.values[i+1])
+        data_added = np.tile(df_row,(shift_requested_list-1,1))
+    df = np.concatenate((requests_sort_by_tb.value, data_added))
+    temporary_table = pd.DataFrame(data=df, columns=df[0])
     request_repeat = temporary_table.sort_values(by=['Ion Source', 'Target'])
     return request_repeat
+'''
+def repeat_request_by_shift(request):
+    # Get request is an ISAC experiment
+    request = request.loc[(request['Beam options'] == 'ISAC Target (RIB)') & (request['Experiment'] != 'Test')]
+    request = request.fillna('')
+    # Sort request by source and target type
+    requests_sort_by_tb = request.sort_values(by=['Ion Source', 'Target'])
+    # Get the request repeat by shift
+    shift_requested_list = requests_sort_by_tb['Shifts requested'].tolist()
+    for i in range(requests_sort_by_tb.index.size):
+        df_row = requests_sort_by_tb.values[i]
+        for j in range (int(shift_requested_list[i])):
+            df_length = len(requests_sort_by_tb)
+            requests_sort_by_tb.loc[df_length] = (df_row)
+            #print(requests_sort_by_tb.values[0])
+            #print(df_row)
+
+    request_repeat = requests_sort_by_tb.sort_values(by=['Ion Source', 'Target'])
+    # print(request_repeat)
+    return request_repeat
+
+'''
+if __name__ == '__main__':
+    request_file = fm.get_files('Requests')
+    request = fm.read_file('Requests', request_file[0])
+    request = Request(request_file[0], request)
+'''
