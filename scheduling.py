@@ -23,8 +23,8 @@ def main():
     print("OVERVIEW OF REQUEST")
     print("-" * 100)
     # print(requests_sort_by_tb)
-    write_request_repeat_to_excel(requests)
-    #write_to_excel(requests)
+    # write_request_repeat_to_excel(requests)
+    write_to_excel(requests)
     
 '''    
 def get_required_shifts(requests: object, row_number):
@@ -166,7 +166,7 @@ def create_data_frame(requests):
                get_ts_tm()[0], requests.beam[i], '', requests.target_type[i],
                requests.source[i], get_ts_tm()[1]]
         data_array.append(row)     
-    df =  pd.DataFrame(data_array, columns = ['','Date','Shift','Offine','current (uA)', 'Offline',
+    df =  pd.DataFrame(data_array, columns = ['Date','Shift','Offine','current (uA)', 'Offline',
                                               'Exp. #', 'Facility', 'Note', 'West / East', 'Beam',
                                               'Energy (keV)', 'Tgt', 'Source', 'Mod'])
     return df
