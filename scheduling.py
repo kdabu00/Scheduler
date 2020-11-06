@@ -8,20 +8,23 @@ from Schedule import Schedule
 from Request import Request
 import FileManager as fm
 import numpy as np
-from random import random
+from random import random, randint
 
+date_list = []
 def main():
     """Main function"""
     request_file = fm.get_files('Requests')
     requests = fm.read_file('Requests', request_file[0])
     requests = Request(request_file[0], requests)
     requests_sort_by_tb = requests.request_sort_by_tb
+    
     # Outputs - Will probably be made into a separate function and saved for future use
     print("-" * 100)
     print("OVERVIEW OF REQUEST")
     print("-" * 100)
     # print(requests_sort_by_tb)
-    write_to_excel(requests)
+    write_request_repeat_to_excel(requests)
+    #write_to_excel(requests)
     
 '''    
 def get_required_shifts(requests: object, row_number):
@@ -42,7 +45,7 @@ def sort_by_target_block(requests: object):
 def get_ts_tm():
     combo = "west2_east4"
     # combo = "west4_east2"
-    random_num = random.randint(0, 1)
+    random_num = randint(0, 1)
     if random_num == 0 and combo == "west2_east4":
         ts = "West"
         tm = 2
@@ -60,7 +63,7 @@ def get_ts_tm():
 
 def get_date(row_number):
     # year_now = datetime.datetime.now().year
-    date_list = []
+    
     present = datetime.now()
     date_21 = datetime(2021, 4, 5)
     if row_number == 0 or row_number == 1 or row_number == 2:
@@ -87,7 +90,9 @@ def get_date(row_number):
         
         if present < date_21:
             date = str(datetime(2021, 4, 6))
-            date_list += 3 * date
+            date_list.append(date)
+            date_list.append(date)
+            date_list.append(date)
             #date_list.append(date*3)
         elif present.date() < date_2022():
             date = datetime.datetime(2022, 4, 5)
@@ -115,20 +120,32 @@ def get_date(row_number):
             date_list.append(date, date, date)
         elif present.date() < date_2030():
             date = datetime.datetime(2030, 4, 9)
-            date_list.append(date, date, date)
+            date_list.append(date)
+            
     else:
         previous_date = date_list[row_number-3]
         date = pd.to_datetime(previous_date) + pd.DateOffset(days=1)
-        date_list.append(date, date, date)
+        date_list.append(date)
+        date_list.append(date)
+        date_list.append(date)
     return date
 
 
-def add_shift(row_number):
+def add_shift():
+    df_shift_list = []
+    for i in range (546):
+        df_shift_list.append("DAY")
+        df_shift_list.append("EVE")
+        df_shift_list.append("OWL")
+    return df_shift_list
+
+    '''
     df_shift_list = []
     if row_number == 0:
         shift_name = "DAY"
         df_shift_list.append("DAY")
     else:
+        df_shift_list = ["DAY"]
         if df_shift_list[row_number-1] == "DAY":
             df_shift_list.append("EVE")
             shift_name = "EVE"
@@ -139,24 +156,28 @@ def add_shift(row_number):
             df_shift_list.append("DAY")
             shift_name = "EVE"
     return shift_name
-
-def create_data_frame(class_name):
+    '''
+def create_data_frame(requests):
     """Import values from excel file and creates a dataframe in python based on imported values"""
     data_array = []
-    for i in range (546):
-        row = [get_date(i),add_shift(i), '', '', '',
-               class_name.request.expirment_number[i], class_name.request.facilitie[i], '',
-               get_ts_tm()[0], class_name.beam[i], '', class_name.target_type[i],
-               class_name.source[i], get_ts_tm()[1]]
+    for i in range (545):
+        row = [get_date(i),add_shift()[i], '', '', '',
+               requests.expirment_number[i], requests.facilitie[i], '',
+               get_ts_tm()[0], requests.beam[i], '', requests.target_type[i],
+               requests.source[i], get_ts_tm()[1]]
         data_array.append(row)     
     df =  pd.DataFrame(data_array, columns = ['','Date','Shift','Offine','current (uA)', 'Offline',
                                               'Exp. #', 'Facility', 'Note', 'West / East', 'Beam',
                                               'Energy (keV)', 'Tgt', 'Source', 'Mod'])
     return df
 
-def write_to_excel(class_name):
-    df = create_data_frame(class_name)
+def write_to_excel(requests):
+    df = create_data_frame(requests)
     df.to_excel ("initial_schedule.xlsx", index = False, header=True)
+
+def write_request_repeat_to_excel(requests):
+    df = requests.request_repeat
+    df.to_excel ("request repeat.xlsx", index = False, header=True)
 
 if __name__ == "__main__":
     main()

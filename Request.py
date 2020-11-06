@@ -41,27 +41,27 @@ class Request:
     
     @property
     def facilitie(self):
-        return set(self.request_repeat['Facility'].tolist())
+        return self.request_repeat['Facility'].tolist()
     
     @property
     def required_shifts(self):
-        return set(self.request_repeat['Shifts requested'].tolist())
+        return self.request_repeat['Shifts requested'].tolist()
     
     @property
     def expirment_number(self):
-        return set(self.request_repeat['Experiment'].tolist())
+        return self.request_repeat['Experiment'].tolist()
 
     @property
     def beam(self):
-        return set(self.request_repeat['Beam'].tolist())
+        return self.request_repeat['Beam'].tolist()
 
     @property
     def target_type(self):
-        return set(self.request_repeat['Target'].tolist())
+        return self.request_repeat['Target'].tolist()
     
     @property
     def source(self):
-        return set(self.request_repeat['Ion Source'].tolist())
+        return self.request_repeat['Ion Source'].tolist()
 
 def refactor_request(request):
     # Check if a request is an ISAC experiment and if the Experiment # is not Test
@@ -104,6 +104,30 @@ def repeat_request_by_shift(request):
         for j in range (int(shift_requested_list[i])):
             df_length = len(requests_sort_by_tb)
             requests_sort_by_tb.loc[df_length] = (df_row)
+
+            def repeat_request_by_shift(request):
+                # Get request is an ISAC experiment
+                request = request.loc[
+                    (request['Beam options'] == 'ISAC Target (RIB)') & (request['Experiment'] != 'Test')]
+                request = request.fillna('')
+                # Sort request by source and target type
+                requests_sort_by_tb = request.sort_values(by=['Ion Source', 'Target'])
+                # Get the request repeat by shift
+                shift_requested_list = requests_sort_by_tb['Shifts requested'].tolist()
+                for i in range(requests_sort_by_tb.index.size):
+                    df_row = requests_sort_by_tb.values[i]
+                    a_series = pd.Series(df_row, index=requests_sort_by_tb.columns)
+                    for j in range(int(shift_requested_list[i])):
+                        # df_length = len(requests_sort_by_tb)
+                        requests_sort_by_tb.append(a_series, ignore_index=True)
+                        requests_sort_by_tb.append(a_series, ignore_index=True)
+                        # print(requests_sort_by_tb.values[0])
+                        # print(df_row)
+
+                request_repeat = requests_sort_by_tb.sort_values(by=['Ion Source', 'Target'])
+                # print(request_repeat)
+                return request_repeat
+
             #print(requests_sort_by_tb.values[0])
             #print(df_row)
 
