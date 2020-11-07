@@ -75,26 +75,17 @@ def set_date(row_number):
     year_now = datetime.datetime.now().year
     date_list = []
     if row_number == 1 or row_number == 2 or row_number == 3:
-        string_2021 = "25/4/2021"
-        string_2022 = "25/4/2022"
-        string_2023 = "25/4/2023"
-        string_2024 = "25/4/2024"
-        string_2025 = "25/4/2025"
-        string_2026 = "25/4/2026"
-        string_2027 = "25/4/2027"
-        string_2028 = "25/4/2028"
-        string_2029 = "25/4/2029"
-        string_2030 = "25/4/2030"
-        date_2021 = datetime.strptime(string_2021, "%d/%m/%Y")
-        date_2022 = datetime.strptime(string_2022, "%d/%m/%Y")
-        date_2023 = datetime.strptime(string_2023, "%d/%m/%Y")
-        date_2024 = datetime.strptime(string_2024, "%d/%m/%Y")
-        date_2025 = datetime.strptime(string_2025, "%d/%m/%Y")
-        date_2026 = datetime.strptime(string_2026, "%d/%m/%Y")
-        date_2027 = datetime.strptime(string_2027, "%d/%m/%Y")
-        date_2028 = datetime.strptime(string_2028, "%d/%m/%Y")
-        date_2029 = datetime.strptime(string_2029, "%d/%m/%Y")
-        date_2030 = datetime.strptime(string_2030, "%d/%m/%Y")
+        date_2021 = datetime.datetime(2021, 4, 25)
+        date_2022 = datetime.datetime(2022, 4, 25)
+        date_2023 = datetime.datetime(2023, 4, 25)
+        date_2024 = datetime.datetime(2024, 4, 25)
+        date_2025 = datetime.datetime(2025, 4, 25)
+        date_2026 = datetime.datetime(2026, 4, 25)
+        date_2027 = datetime.datetime(2027, 4, 25)
+        date_2028 = datetime.datetime(2028, 4, 25)
+        date_2029 = datetime.datetime(2029, 4, 25)
+        date_2030 = datetime.datetime(2030, 4, 25)
+
         present = datetime.now()
         if present.date() < date_2021():
             date = datetime.datetime(2021, 4, 6)
@@ -150,24 +141,27 @@ def add_shift(row_number):
             shift_name = "EVE"
     return shift_name
 
-def create_data_frame():
+def create_data_frame(requests):
     """Import values from excel file and creates a dataframe in python based on imported values"""
-    data = pd.read_excel(r "C:\\Users", user, "Documents", requests_name)
-    # for csv files use code below
-    # data = pd.read_csv(r "C:\\Users", user, "Documents", requests_name)
-    df = pd.DataFrame(data, columns = ['Experiments', 'Priority', 'Facility', 'Beam options', 'Shifts requested', 
-    'Target', 'Ion Source', 'Beam', 'Field', 'Acc Area'])
-    # can use xls in code line above if using earlier version of excel
-    # need to use command 'pip install xlrd' for Excel file support
-    # xlrd need to be version 1.0.0 or up
+    data_array = []
+    for i in range (545):
+        row = [get_date(i),add_shift()[i], '', '', '',
+               requests.expirment_number[i], requests.facilitie[i], '',
+               get_ts_tm()[0], requests.beam[i], '', requests.target_type[i],
+               requests.source[i], get_ts_tm()[1]]
+        data_array.append(row)     
+    df =  pd.DataFrame(data_array, columns = ['Date','Shift','Offine','current (uA)', 'Offline',
+                                              'Exp. #', 'Facility', 'Note', 'West / East', 'Beam',
+                                              'Energy (keV)', 'Tgt', 'Source', 'Mod'])
+    return df
 
-    print(df)
+def write_to_excel(requests):
+    df = create_data_frame(requests)
+    df.to_excel ("initial_schedule.xlsx", index = False, header=True)
 
-def write_to_excel():
-    df.to_excel (r "C:\\Users", user, "Documents", requests_name, index = False, header=True)
-    # for csv files use below line
-    # df.to_csv (r "C:\\Users", user, "Documents", requests_name, index = False, header=True)
-
+def write_request_repeat_to_excel(requests):
+    df = requests.request_repeat
+    df.to_excel ("request repeat.xlsx", index = False, header=True)
 
 if __name__ == "__main__":
     main()

@@ -1,5 +1,5 @@
 """
-constrain.py - WIP
+constraint.py - WIP
 Author: Leo Liu, Kevin Dabu
 
 a program to read excel files using pandas, containing methods to check the fitness parameters of a schedule
