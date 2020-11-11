@@ -39,7 +39,7 @@ def findDay(date):
     weekday = datetime.datetime.strptime(date, '%Y-%m-%d %H:%M:%S').weekday() 
     return (calendar.day_name[weekday]) 
 
-hello
+
 def get_target_block_set(schedule: object):
     """Generate a list of all target blocks"""
     target_block_list = list()
