@@ -1,9 +1,11 @@
+
 """
 Schedule.py
 Author: Kevin Dabu
 Date: OCT.29 2020
 This file contains the basic methods and attributes of a schedule for the TRIUMF Scheduler
 """
+
 
 class Schedule:
 
