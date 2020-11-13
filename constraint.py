@@ -18,6 +18,7 @@ def run_check(schedule):
     """Main function"""
 
     constraint_log_set = set()
+
     logs = (check_tb_length(schedule.schedule)[1], check_tb_start_time(schedule.schedule)[1], 
             check_integer_weeks(schedule.schedule)[1], check_target_station(schedule.schedule)[1], 
             check_ts_tm_alternates(schedule.schedule)[1], check_minimum_length_of_tb(schedule.schedule)[1])
@@ -26,6 +27,7 @@ def run_check(schedule):
     bools_list = (check_tb_length(schedule.schedule)[0], check_tb_start_time(schedule.schedule)[0], 
             check_integer_weeks(schedule.schedule)[0], check_target_station(schedule.schedule)[0], 
             check_ts_tm_alternates(schedule.schedule)[0], check_minimum_length_of_tb(schedule.schedule)[0])
+
     valid_schedule = all(bools_list)
 
     if valid_schedule:
@@ -40,6 +42,7 @@ def findDay(date):
     return (calendar.day_name[weekday]) 
 
 
+
 def get_target_block_set(schedule):
     """Generate a list of all target blocks"""
     target_block_list = list()
@@ -47,10 +50,10 @@ def get_target_block_set(schedule):
         if (schedule.schedule.values[i][11] != "Tgt") and (pd.notnull(schedule.schedule.values[i][11])):
             # Ignores values in Tgt that are equal Tgt or empty
             target_block = schedule.schedule.values[i][11]+schedule.schedule.values[i][12]+str(schedule.schedule.values[i][13])
+
             target_block_list.append(target_block)
             target_block_set = list(dict.fromkeys(target_block_list))
     return target_block_set, target_block_list
-
 
 def get_ts_tm_combo(schedule):
     """Get the list of the Target Station/Target Module combination"""
@@ -89,6 +92,7 @@ def check_tb_start_time(schedule):
 def check_integer_weeks(schedule):
     """Checks rule #10 Each schedule has a fixed start date, and runs for a fixed integer number of weeks"""
     total_shifts_in_schedule = schedule.schedule.index.size
+
     constraint_log = ""
     if (total_shifts_in_schedule-1) % 21 == 0:
         valid_schedule = True
@@ -97,7 +101,6 @@ def check_integer_weeks(schedule):
         constraint_log = 'The schedule should be a fixed integer weeks'
 
     return valid_schedule, constraint_log
-
 
 def check_target_station(schedule):
     """Checks rule #1 The location of the Target Station and Target module at the schedule start is fixed"""

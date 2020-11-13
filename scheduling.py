@@ -2,6 +2,7 @@ import getpass
 import os.path
 import pandas as pd
 from datetime import datetime
+
 from datetime import date
 import calendar
 from Schedule import Schedule
@@ -22,6 +23,7 @@ def main():
     print("-" * 100)
     print("OVERVIEW OF REQUEST")
     print("-" * 100)
+
     # print(requests_sort_by_tb)
     # write_request_repeat_to_excel(requests)
     write_to_excel(requests)
@@ -35,6 +37,7 @@ def get_required_shifts(requests: object, row_number):
 def get_expirment_number(requests: object, row_number):
     exp_num = requests.values[row_number-2][0]
     return exp_num
+
     request.expirment_number
 
 def sort_by_target_block(requests: object):
@@ -94,6 +97,7 @@ def get_date(row_number):
             date_list.append(date)
             date_list.append(date)
             #date_list.append(date*3)
+
         elif present.date() < date_2022():
             date = datetime.datetime(2022, 4, 5)
             date_list.append(date, date, date)
@@ -120,6 +124,7 @@ def get_date(row_number):
             date_list.append(date, date, date)
         elif present.date() < date_2030():
             date = datetime.datetime(2030, 4, 9)
+
             date_list.append(date)
             
     else:
