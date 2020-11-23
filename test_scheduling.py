@@ -1,7 +1,18 @@
+"""
+test_scheduling.py
+Schedule generation
+
+testing out methods to modify the ancestor schedule to create new schedules based off of it. Then will make mutations as
+planned.
+Author: Kevin Dabu
+
+TODO: Make modular, move code from main to own separate functions, finalize the generation, fix the rest of the code..
+"""
 from Request import Request
 import FileManager as fm
 from ScheduleManager import ScheduleManager
 from Schedule import Schedule
+import pandas as pd
 
 
 def main():
@@ -43,7 +54,6 @@ def main():
     print(startups)
 
     new_schedule = schedule.schedule[['BL2A_Offline', 'I_Exp.#', 'I_Facility', 'I_Tgt', 'I_Source']]
-    print(new_schedule)
     # This is a test value, that uses the indexes from startup, Index 86 is the first startup,
     # Index 152 is the startup after the block. By subtracting the last index by 1 (152 - 1) you get the all the
     # experiments in the target block ex. [startups[0]:(startups[1] - 1)]
@@ -52,17 +62,52 @@ def main():
     max = len(tb_1)
     # Target Dictionary
     tgt = {}
+    tgt_exp = {}
     for req_exp in request.experiments:
+        other_exp = {}
         # if target not in target dictionary
         if req_exp[2] not in tgt:
             # target equals shift amount
             tgt[req_exp[2]] = request.experiments[req_exp][3]
+            tgt_exp[req_exp[2]] = [[req_exp, request.experiments[req_exp][3]]]
             # target shift amount is less than the target block size and adding another experiment
             # wont go over tb length
         elif tgt[req_exp[2]] < max \
             and tgt[req_exp[2]] + request.experiments[req_exp][3] <= max:
             # add shift amount to target
             tgt[req_exp[2]] += request.experiments[req_exp][3]
+            tgt_exp[req_exp[2]].append([req_exp, request.experiments[req_exp][3]])
+
+    # Finds the best fit out of all the Targets to be used in the block
+    # Deletes the Targets that are not better
+    best_fit = 0
+    copy_tgt = list(tgt)
+    for i in copy_tgt:
+        if tgt[i] > best_fit:
+            best_fit = tgt[i]
+        else:
+            tgt.pop(i, None)
+            tgt_exp.pop(i, None)
+
+    """This section below should be within a loop using the startups to find the start_index and loops to find the 
+    values within the tgt_exp dictionary"""
+    # index of the first startup indicating new target block, set as 86 for now, will be using the startups list later
+    start_index = 86
+    # finds the shift of the first experiment in with the target TA as TA was the best fit for this block (63/65)
+    a = start_index + tgt_exp['TA'][0][1]
+    # Sets the experiment from tgt_exp['TA'][0][0] which is L122 for
+    new_schedule.loc[(start_index+1):a, 'I_Exp.#':'I_Source'] = tgt_exp['TA'][0][0]
+    # move the starting index to the next point since the exp was only 5 shifts long (86 + 5) = 91,
+    # the next starting index should be + 1
+    start_index += (a + 1)
+    # Testing to see the new dataframe and how it looks right now,
+    # Need to change so we have all columns and rows not just exp.#, facility, tgt, source etc...
+    pd.set_option('display.max_columns', None)
+    pd.set_option('max_rows', None)
+    print(new_schedule)
+
+    """AFTER RUNNING THIS YOU WILL SEE SettingWithCopyWarning need to set up a try catch or something to ignore this
+    Error as it doesnt effect the output.."""
 
 
 def find_exp_shifts(schedule):
