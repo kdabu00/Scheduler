@@ -46,7 +46,7 @@ def main():
     print(new_schedule)
     # This is a test value, that uses the indexes from startup, Index 86 is the first startup,
     # Index 152 is the startup after the block. By subtracting the last index by 1 (152 - 1) you get the all the
-    # experiments in the target block
+    # experiments in the target block ex. [startups[0]:(startups[1] - 1)]
     tb_1 = new_schedule.iloc[86:151].values.tolist()
     # len(tb_1) is the total amount of shifts in the target block
     max = len(tb_1)
