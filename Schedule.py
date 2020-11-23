@@ -29,8 +29,8 @@ class Schedule:
         """Finds the number of different scheduled experiments, returns these experiments"""
         # Ignores values in Exp. # that are equal to Exp. #,
         # Test, Setup or empty, IGNORING Experiment S2000 *Filler exp*
-        self.schedule = self.schedule.loc[(self.schedule['I_Exp.#'] != '') & (self.schedule['I_Exp.#'] != 'Test')
-                                & (self.schedule['I_Exp.#'] != 'Setup') & (self.schedule['I_Exp.#'] != 'S2000')]
+        self.schedule = self.schedule.loc[(self.schedule['I_Exp.#'] != '') & (self.schedule['I_Exp.#'] != 'TEST')
+                                & (self.schedule['I_Exp.#'] != 'SETUP') & (self.schedule['I_Exp.#'] != 'S2000')]
 
         # Make a list of each row with ISAC experiment #, Facility, Target, and Source
         unique_exp = self.schedule[['I_Exp.#', 'I_Facility', 'I_Tgt', 'I_Source']].values.tolist()
@@ -44,8 +44,8 @@ class Schedule:
     @property
     def facilities(self):
         """Returns all ISAC facilities and amount of times they are scheduled"""
-        self.schedule = self.schedule.loc[(self.schedule['I_Exp.#'] != '') & (self.schedule['I_Exp.#'] != 'Test')
-                                & (self.schedule['I_Exp.#'] != 'Setup') & (self.schedule['I_Exp.#'] != 'S2000')]
+        self.schedule = self.schedule.loc[(self.schedule['I_Exp.#'] != '') & (self.schedule['I_Exp.#'] != 'TEST')
+                                        & (self.schedule['I_Exp.#'] != 'SETUP') & (self.schedule['I_Exp.#'] != 'S2000')]
         facilities = set(self.schedule['I_Facility'].tolist())
         return facilities
 
@@ -106,6 +106,10 @@ def refactor_schedule(schedule):
     schedule = schedule.fillna('')
     # Change SIS/RILIS to just RILIS
     schedule['I_Source'] = schedule['I_Source'].replace(['SIS/RILIS'], 'RILIS')
+    schedule.loc[:, 'I_Source'] = schedule.loc[:, 'I_Source'].str.upper()
+    schedule.loc[:, 'I_Facility'] = schedule.loc[:, 'I_Facility'].str.upper()
+    schedule.loc[:, 'I_Exp.#'] = schedule.loc[:, 'I_Exp.#'].str.upper()
+    schedule.loc[:, 'I_Tgt'] = schedule.loc[:, 'I_Tgt'].str.upper()
     # Strip trailing and leading whitespace from facility column
     schedule['I_Facility'] = schedule['I_Facility'].str.strip()
     return schedule

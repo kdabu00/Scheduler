@@ -29,10 +29,7 @@ def save_data(data, filename):
     """Saves file to csv, with parameters for data to be saved and name for the file"""
     with open('C:\\Users\\kevin\\Documents\\' + filename, 'w', newline='') as out:
         csv_out = csv.writer(out)
-        if filename == 'past_experiments.csv':
-            for tup in data:
-                csv_out.writerow(tup)
-        elif filename == 'fields.csv':
+        if filename == 'fields.csv':
             for key in data:
                 csv_out.writerow((key, data[key]))
 
