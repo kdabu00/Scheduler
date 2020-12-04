@@ -18,6 +18,7 @@ class ScheduleManager:
         self.schedules.append(schedule)
 
     def rem_schedule(self, schedule_name):
+        """Removes Schedule from the schedule manager"""
         pass
 
     def sort_by_fitness(self):

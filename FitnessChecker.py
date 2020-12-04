@@ -14,6 +14,23 @@ from Schedule import Schedule
 from Request import Request
 from ScheduleManager import ScheduleManager
 import FileManager as fm
+import constraint as c
+
+"""
+   p1 = Total Experiments
+   p2 = High Priority vs Experiments Scheduled
+   p3 = Fraction of Beam Requests Satisfied
+   p4 = Balance of Research Fields
+   p5 = Balance of Accelerator Areas
+   p6 = Diversity of Facilities
+"""
+
+p1 = True
+p2 = True
+p3 = True
+p4 = True
+p5 = True
+p6 = True
 
 
 def run_check():
@@ -28,7 +45,6 @@ def run_check():
     request_file = fm.get_files('Requests')
 
     for i in range(len(schedule_files)):
-
         # assign the excel data frame to respective variable
         schedule = fm.read_file('Schedules', schedule_files[i])
         request = fm.read_file('Requests', request_file[0])
@@ -36,43 +52,72 @@ def run_check():
         sm.add_schedule(Schedule(schedule_files[i].replace('.xlsx', ''), schedule))
         schedule = sm.schedules[i]
         request = Request(request_file[0], request)
-
+        print(c.run_check(schedule))
         # Find schedule attributes
+
         schedule.set_priorities(check_priorities(schedule.experiments, request.experiments))
         schedule.set_fields(check_fields(schedule.experiments, request.experiments))
         schedule.set_acc(check_acc(schedule.experiments, request.experiments))
 
         # Fitness checks
-        schedule.set_fitness(calculate_total_fitness(request, schedule))
+        output = calculate_total_fitness(request, schedule)
+        schedule.set_fitness(output[0])
 
         # Generates output
-        schedule.set_output(output_fitness(schedule_files[i].replace('.xlsx', ''),
-                            request.experiments, schedule.priorities, schedule.experiments,
-                            schedule.fields, schedule.parameters['fields'], schedule.acc,
-                            schedule.parameters['acc'], schedule.facilities, request.facilities, schedule.fitness))
+        schedule.set_output(output[1])
 
     # sorts the schedules in the schedule manager by fitness values
     sm.sort_by_fitness()
 
-    for schedule in sm.schedules[:5]:
-         fm.write_fitness(schedule.output, schedule.file_name)
+    for schedule in sm.schedules[:]:
+        fm.write_fitness(schedule.output, schedule.file_name)
 
 
 def calculate_total_fitness(request, schedule):
     """Calculates the total fitness using the formula given, sets each parameter to a dictionary in the schedule obj"""
-    total_exp = (6 * len(schedule.experiments)) / schedule.shifts
-    priority = schedule.priorities['H'] / len(schedule.experiments)
-    s_exp_vs_r_exp = len(schedule.experiments) / len(request.experiments)
-    fields = find_balance(schedule.fields, 'field')
-    acc = find_balance(schedule.acc, 'acc')
-    s_fac_vs_r_fac = len(schedule.facilities) / len(request.facilities)
 
-    schedule.set_fitness_parameters(total_exp, priority, s_exp_vs_r_exp,
-                                    fields, acc, s_fac_vs_r_fac)
+    total_exp = None
+    priority = None
+    s_exp_vs_r_exp = None
+    fields = None
+    acc = None
+    s_fac_vs_r_fac = None
+
+    text = "%s\nFITNESS OVERVIEW: %s\n%s" % (('-' * 60), schedule.file_name, ('-' * 60))
+
+    if p1:
+        total_exp = (6 * len(schedule.experiments)) / schedule.shifts
+        text += "\nParameter 1: Total Experiments\nExperiments Scheduled: %d\n" % len(schedule.experiments)
+    if p2:
+        priority = schedule.priorities['H'] / len(schedule.experiments)
+        text += "\nParameter 2: High Priority vs Scheduled Experiments\nH: %d Scheduled: %d" % (schedule.priorities['H'], len(schedule.experiments))
+        text += " Fitness: %0.2f\n" % priority
+    if p3:
+        s_exp_vs_r_exp = len(schedule.experiments) / len(request.experiments)
+        text += "\nParameter 3: Fraction of Beam Requests Satisfied\n"
+        text += "Beam requests satisfied: %d/%d, Fitness: %0.2f\n" % (len(schedule.experiments), len(request.experiments), s_exp_vs_r_exp)
+    if p4:
+        fields = find_balance(schedule.fields, 'field')
+        text += "\nParameter 4: Balance of Research Fields\nFields Scheduled:"
+        text += "ASTRO: %d, FSYMM: %d, STRUC: %d\nFitness: %0.2f\n" % (schedule.fields['ASTRO'], schedule.fields['FSYMM'], schedule.fields['STRUC'], fields)
+    if p5:
+        acc = find_balance(schedule.acc, 'acc')
+        text += "\nParameter 5: Balance of Accelerator Areas\nAccelerator Areas Scheduled:"
+        text += "LEBT: %d, MEBT: %d, SEBT: %d\nFitness: %0.2f\n" % (schedule.acc['LEBT'], schedule.acc['MEBT'], schedule.acc['SEBT'], acc)
+    if p6:
+        s_fac_vs_r_fac = len(schedule.facilities) / len(request.facilities)
+        text += "\nParameter 6: Diversity of Facilities\n"
+        text += "Different Facilities: %d  Total Facilities: %d, Fitness: %0.2f\n" % (len(schedule.facilities), len(request.facilities), s_fac_vs_r_fac)
+
+    schedule.set_fitness_parameters(total_exp=total_exp, priority=priority, requests=s_exp_vs_r_exp,
+                                    fields=fields, acc=acc, fac=s_fac_vs_r_fac)
     fitness = 1
     for key in schedule.parameters:
-        fitness *= schedule.parameters[key]
-    return fitness
+        if schedule.parameters[key] is not None:
+            fitness *= schedule.parameters[key]
+    text += "\nTOTAL FITNESS: %0.2f" % fitness
+
+    return fitness, text
 
 
 def check_priorities(scheduled_experiments: set, exp_priorities: dict) -> object:
@@ -127,7 +172,7 @@ def find_balance(schedule, use_case):
         for i in range(len(deltas)):
             if deltas[i] < 0:
                 deltas[i] *= -1
-        product = (1-deltas[0])*(1-deltas[1])*(1-deltas[2])
+        product = (1 - deltas[0]) * (1 - deltas[1]) * (1 - deltas[2])
         return product
 
     elif use_case == 'field':
@@ -141,54 +186,19 @@ def find_balance(schedule, use_case):
         for i in range(len(deltas)):
             if deltas[i] < 0:
                 deltas[i] *= -1
-        product = (1-deltas[0])*(1-deltas[1])*(1-deltas[2])
+        product = (1 - deltas[0]) * (1 - deltas[1]) * (1 - deltas[2])
         return product
 
 
-def update_data(exps: set, fields: dict) -> None:
+def update_fields(fields: dict) -> None:
     """
     This should only be ran when an experiment meets required fitness levels,
     and is chosen as a schedule to be used - WIP
     """
-    old_exp = fm.read_data('past_experiments.csv', 'exp')
     old_fields = fm.read_data('fields.csv', 'field')
-
-    for exp in exps:
-        old_exp.add(exp)
-
     for key in fields:
         old_fields[key] += fields[key]
-
-    fm.save_data(old_exp, 'past_experiments.csv')
     fm.save_data(old_fields, 'fields.csv')
-
-
-def output_fitness(filename, exp_requested, num_priorities, scheduled_experiments,
-                   schedule_fields, field_fitness, schedule_acc, acc_fitness,
-                   schedule_facilities, request_facilities, total_fitness):
-    """Outputs fitness values to the console, TODO Make this look better...."""
-    text = "%s\nFITNESS OVERVIEW: %s\n%s\nParameter 1: Total Experiments\nExperiments Scheduled: %d\n" %\
-            (('-' * 60), filename, ('-' * 60), len(scheduled_experiments))
-    text += "\nParameter 2: High-Priority vs Experiments Scheduled\nThere are %d high priority experiment(s) " %\
-            num_priorities['H']
-    text += "and %d medium priority experiment(s) scheduled.\n" % num_priorities['M']
-    text += "High Priority Experiments / Total Experiments: %d/%d, Fitness: %0.2f\n" %\
-            (num_priorities['H'], len(scheduled_experiments), (num_priorities['H']/len(scheduled_experiments)))
-    text += "\nParameter 3: Fraction of Beam Requests Satisfied\nBeam requests satisfied: "
-    text += "%d/%d, Fitness: %0.2f\n\nParameter 4: Balance of Research Fields\n" %\
-            (len(scheduled_experiments), len(exp_requested), (len(scheduled_experiments) / len(exp_requested)))
-    text += "Fields Scheduled:\nASTRO: %d\nFSYMM: %d\nSTRUC: %d" %\
-            (schedule_fields['ASTRO'], schedule_fields['FSYMM'], schedule_fields['STRUC'])
-    text += "\nFitness: %0.2f\n\nParameter 5: Balance of Accelerator" %\
-            field_fitness
-    text += " Areas\nAccelerator Areas Scheduled:\nLEBT: %d\nMEBT: %d\nSEBT: %d" %\
-            (schedule_acc['LEBT'], schedule_acc['MEBT'], schedule_acc['SEBT'])
-    text += "\nFitness: %0.2f\n\nParameter 6: Diversity of Facilities\n" %\
-            acc_fitness
-    text += "There are %d different facilities scheduled out of %d, Fitness: %0.2f\n" %\
-            (len(schedule_facilities), len(request_facilities), (len(schedule_facilities)/len(request_facilities)))
-    text += "\nTOTAL FITNESS: %0.2f" % total_fitness
-    return text
 
 
 if __name__ == "__main__":
