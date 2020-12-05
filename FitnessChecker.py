@@ -71,6 +71,7 @@ def run_check():
 
     for schedule in sm.schedules[:]:
         fm.write_fitness(schedule.output, schedule.file_name)
+        c.run_check(schedule.output)
 
 
 def calculate_total_fitness(request, schedule):

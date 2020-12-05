@@ -5,7 +5,6 @@ Date: OCT.29 2020
 This file contains the basic methods and attributes of a schedule for the TRIUMF Scheduler
 """
 
-
 class Schedule:
 
     def __init__(self, name, schedule):
@@ -35,7 +34,6 @@ class Schedule:
         # Make a list of each row with ISAC experiment #, Facility, Target, and Source
         unique_exp = self.schedule[['I_Exp.#', 'I_Facility', 'I_Tgt', 'I_Source']].values.tolist()
         scheduled_exp = set()
-
         # Store each experiment as a tuple inside of a set
         for exp in unique_exp:
             scheduled_exp.add(tuple(exp))
@@ -61,6 +59,14 @@ class Schedule:
     @property
     def isvalid(self):
         return self.is_valid
+
+    @property
+    def date(self):
+        return set(self.schedule['Date'].tolist())
+    
+    @property
+    def shift(self):
+        return set(self.schedule['Shift'].tolist())
 
     def set_fitness_parameters(self, total_exp, priority, requests, fields, acc, fac):
         self.parameters = {'total_exp': total_exp,

@@ -18,14 +18,14 @@ def run_check(schedule):
     """Main function"""
 
     constraint_log_set = set()
-    logs = (check_tb_length(schedule.schedule)[1], check_tb_start_time(schedule.schedule)[1], 
-            check_integer_weeks(schedule.schedule)[1], check_target_station(schedule.schedule)[1], 
-            check_ts_tm_alternates(schedule.schedule)[1], check_minimum_length_of_tb(schedule.schedule)[1])
+    logs = (check_tb_length(schedule)[1], check_tb_start_time(schedule)[1], 
+            check_integer_weeks(schedule)[1], check_target_station(schedule)[1], 
+            check_ts_tm_alternates(schedule)[1], check_minimum_length_of_tb(schedule)[1])
     constraint_log_set.add(logs)
 
-    bools_list = (check_tb_length(schedule.schedule)[0], check_tb_start_time(schedule.schedule)[0], 
-            check_integer_weeks(schedule.schedule)[0], check_target_station(schedule.schedule)[0], 
-            check_ts_tm_alternates(schedule.schedule)[0], check_minimum_length_of_tb(schedule.schedule)[0])
+    bools_list = (check_tb_length(schedule)[0], check_tb_start_time(schedule)[0], 
+            check_integer_weeks(schedule)[0], check_target_station(schedule)[0], 
+            check_ts_tm_alternates(schedule)[0], check_minimum_length_of_tb(schedule)[0])
     valid_schedule = all(bools_list)
 
     if valid_schedule:
@@ -74,9 +74,9 @@ def get_number_of_unsatisfied_constraints(bools_list):
 def check_tb_start_time(schedule):
     """Checks rule #4 Target blocks start and end on a Tuesday DAY shift"""
     start_date = str(schedule.schedule.values[2][0])
-    end_date = str(schedule.schedule.values[549][0])
+    end_date = str(schedule.schedule.values[547][0])
     start_shift = schedule.schedule.values[2][1]
-    end_shift = schedule.schedule.values[549][1]
+    end_shift = schedule.schedule.values[547][1]
     constraint_log = ""
     if findDay(start_date) == "Tuesday" and start_shift == "DAY" and findDay(end_date) == "Tuesday" and end_shift == "DAY":
         valid_schedule = True
@@ -162,4 +162,3 @@ def check_minimum_length_of_tb(schedule):
                 constraint_log = 'The minimum length of the final target block in a schedule is 2 weeks'
             target_block_shifts = 0
     return valid_schedule, constraint_log
-
