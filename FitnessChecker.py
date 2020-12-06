@@ -52,7 +52,7 @@ def run_check():
         sm.add_schedule(Schedule(schedule_files[i].replace('.xlsx', ''), schedule))
         schedule = sm.schedules[i]
         request = Request(request_file[0], request)
-        print(c.run_check(schedule))
+        print(c.run_check(schedule)[0])
         # Find schedule attributes
 
         schedule.set_priorities(check_priorities(schedule.experiments, request.experiments))
@@ -71,7 +71,6 @@ def run_check():
 
     for schedule in sm.schedules[:]:
         fm.write_fitness(schedule.output, schedule.file_name)
-        c.run_check(schedule.output)
 
 
 def calculate_total_fitness(request, schedule):

@@ -31,66 +31,63 @@ p6 = True
 
 def run_check(schedule):
     """Main function
-
     constraint_log_set = set()
-    logs = (check_tb_length(schedule)[1], check_tb_start_time(schedule)[1], 
-            check_integer_weeks(schedule)[1], check_target_station(schedule)[1], 
+    logs = (check_tb_length(schedule)[1], check_tb_start_time(schedule)[1],
+            check_integer_weeks(schedule)[1], check_target_station(schedule)[1],
             check_ts_tm_alternates(schedule)[1], check_minimum_length_of_tb(schedule)[1])
     constraint_log_set.add(logs)
-
-    bools_list = (check_tb_length(schedule)[0], check_tb_start_time(schedule)[0], 
-            check_integer_weeks(schedule)[0], check_target_station(schedule)[0], 
+    bools_list = (check_tb_length(schedule)[0], check_tb_start_time(schedule)[0],
+            check_integer_weeks(schedule)[0], check_target_station(schedule)[0],
             check_ts_tm_alternates(schedule)[0], check_minimum_length_of_tb(schedule)[0])
     valid_schedule = all(bools_list)
-
     if valid_schedule:
         return True
     else:
         return False
     """
     constraint_output = check_schedule(schedule)
-    schedule.set_constraint_logs = constraint_output[0]
-    schedule.set_constraint_bools = constraint_output[1]
+    return constraint_output
 
 
 
 def check_schedule(schedule):
-    logs = None
+    logs = ''
     bools = []
 
     if p1:
-        logs = check_tb_length(schedule)[1].join
+        logs += check_tb_length(schedule)[1] + '\n'
         bools.append(check_tb_length(schedule)[0])
     if p2:
-        logs = check_tb_start_time(schedule)[1].join
+        logs += check_tb_start_time(schedule)[1] + '\n'
         bools.append(check_tb_start_time(schedule)[0])
     if p3:
-        logs = check_integer_weeks(schedule)[1].join
+        logs += check_integer_weeks(schedule)[1] + '\n'
         bools.append(check_integer_weeks(schedule)[0])
     if p4:
-        logs = check_target_station(schedule)[1].join
+        logs += check_target_station(schedule)[1] + '\n'
         bools.append(check_target_station(schedule)[0])
     if p5:
-        logs = check_ts_tm_alternates(schedule)[1].join
+        logs += check_ts_tm_alternates(schedule)[1] + '\n'
         bools.append(check_ts_tm_alternates(schedule)[0])
     if p6:
-        logs = check_minimum_length_of_tb(schedule)[1].join
+        logs += check_minimum_length_of_tb(schedule)[1] + '\n'
         bools.append(check_minimum_length_of_tb(schedule)[0])
-    
+
     valid_schedule = all(bools)
     return logs, valid_schedule
 
-def findDay(date): 
+
+def findDay(date):
     """Find a weekdays of a date"""
-    weekday = datetime.datetime.strptime(date, '%Y-%m-%d %H:%M:%S').weekday() 
-    return (calendar.day_name[weekday]) 
+    weekday = datetime.datetime.strptime(date, '%Y-%m-%d %H:%M:%S').weekday()
+    return (calendar.day_name[weekday])
 
 
 def get_target_block_set(schedule):
     """Generate a list of all target blocks"""
     target_block_list = list()
     for i in range(len(schedule.schedule.index)):  # schedule.index.size gets the amount of rows within the excel file
-        if (schedule.target[i]!= "Tgt") and (pd.notnull(schedule.target[i])):
+        if schedule.target[i] != '':
             # Ignores values in Tgt that are equal Tgt or empty
             target_block = schedule.target[i]+schedule.source[i]+str(schedule.module[i])
             target_block_list.append(target_block)
@@ -102,7 +99,7 @@ def get_ts_tm_combo(schedule):
     """Get the list of the Target Station/Target Module combination"""
     combo_list = list()
     for i in range(len(schedule.schedule.index)):
-        if (schedule.station[i] != "West / East") and (pd.notnull(schedule.station[i])):
+        if schedule.station[i] != '':
             combo = schedule.station[i] + str(schedule.module[i])
             combo_list.append(combo)
             combo_list_2 = list(dict.fromkeys(combo_list))
@@ -115,7 +112,7 @@ def get_number_of_unsatisfied_constraints(bools_list):
         if not bools_list[i]:
             num_unsatisfied_constraints += 1
     return num_unsatisfied_constraints
-            
+
 
 def check_tb_start_time(schedule):
     """Checks rule #4 Target blocks start and end on a Tuesday DAY shift"""
@@ -181,16 +178,18 @@ def check_tb_length(schedule):
     target_block_list = get_target_block_set(schedule)[1]
     target_block_shifts = 0
     constraint_log = ""
-    for i in range(len(target_block_list)-43):  
+    for i in range(len(target_block_list)-43):
         if ('UCx' in target_block_list[i]) and (target_block_list[i] == target_block_list[i+1]):
             target_block_shifts += 1.25
         elif (target_block_list[i] == target_block_list[i+1]):
             target_block_shifts += 1
+        elif target_block_shifts < 63 or target_block_shifts > 105:
+            valid_schedule = False
+            constraint_log = 'The maximum length of a target block with UCx is 4 weeks, and other target block is 5 weeks. The minimum length of a target block is 3 weeks'
+            target_block_shifts = 0
         else:
-            if target_block_shifts < 63 or target_block_shifts > 105:
-                valid_schedule = False
-                constraint_log = 'The maximum length of a target block with UCx is 4 weeks, and other target block is 5 weeks. The minimum length of a target block is 3 weeks'
-                target_block_shifts = 0
+            valid_schedule = False
+
     return valid_schedule, constraint_log
 
 
@@ -200,7 +199,7 @@ def check_minimum_length_of_tb(schedule):
     target_block_shifts = 0
     constraint_log = ""
     for i in range(len(target_block_list)-1):
-        if (target_block_list[i] == target_block_list[i+1]):
+        if target_block_list[i] == target_block_list[i+1]:
             target_block_shifts += 1
         else:
             if target_block_shifts < 42 :
