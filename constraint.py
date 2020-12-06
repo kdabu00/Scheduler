@@ -56,26 +56,26 @@ def run_check(schedule):
 
 def check_schedule(schedule):
     logs = None
-    bools = None
+    bools = []
 
     if p1:
-        logs += check_tb_length(schedule)[1]
-        bools +=  check_tb_length(schedule)[0]
+        logs = check_tb_length(schedule)[1].join
+        bools.append(check_tb_length(schedule)[0])
     if p2:
-        logs += check_tb_start_time(schedule)[1]
-        bools += check_tb_start_time(schedule)[0]
+        logs = check_tb_start_time(schedule)[1].join
+        bools.append(check_tb_start_time(schedule)[0])
     if p3:
-        logs += check_integer_weeks(schedule)[1]
-        bools += check_integer_weeks(schedule)[0]
+        logs = check_integer_weeks(schedule)[1].join
+        bools.append(check_integer_weeks(schedule)[0])
     if p4:
-        logs += check_target_station(schedule)[1]
-        bools += check_target_station(schedule)[0]
+        logs = check_target_station(schedule)[1].join
+        bools.append(check_target_station(schedule)[0])
     if p5:
-        logs += check_ts_tm_alternates(schedule)[1]
-        bools += check_ts_tm_alternates(schedule)[0]
+        logs = check_ts_tm_alternates(schedule)[1].join
+        bools.append(check_ts_tm_alternates(schedule)[0])
     if p6:
-        logs += check_minimum_length_of_tb(schedule)[1]
-        bools += check_minimum_length_of_tb(schedule)[0]
+        logs = check_minimum_length_of_tb(schedule)[1].join
+        bools.append(check_minimum_length_of_tb(schedule)[0])
     
     valid_schedule = all(bools)
     return logs, valid_schedule
@@ -89,10 +89,10 @@ def findDay(date):
 def get_target_block_set(schedule):
     """Generate a list of all target blocks"""
     target_block_list = list()
-    for i in range(schedule.size-1):  # schedule.index.size gets the amount of rows within the excel file
+    for i in range(len(schedule.schedule.index)):  # schedule.index.size gets the amount of rows within the excel file
         if (schedule.target[i]!= "Tgt") and (pd.notnull(schedule.target[i])):
             # Ignores values in Tgt that are equal Tgt or empty
-            target_block = schedule.target[i][11]+schedule.values[i][12]+str(schedule.values[i][13])
+            target_block = schedule.target[i]+schedule.source[i]+str(schedule.module[i])
             target_block_list.append(target_block)
             target_block_set = list(dict.fromkeys(target_block_list))
     return target_block_set, target_block_list
@@ -101,9 +101,9 @@ def get_target_block_set(schedule):
 def get_ts_tm_combo(schedule):
     """Get the list of the Target Station/Target Module combination"""
     combo_list = list()
-    for i in range(schedule.schedule.index.size):
-        if (schedule.schedule.values[i][8] != "West / East") and (pd.notnull(schedule.schedule.values[i][8])):
-            combo = schedule.schedule.values[i][8] + str(schedule.schedule.values[i][13])
+    for i in range(len(schedule.schedule.index)):
+        if (schedule.station[i] != "West / East") and (pd.notnull(schedule.station[i])):
+            combo = schedule.station[i] + str(schedule.module[i])
             combo_list.append(combo)
             combo_list_2 = list(dict.fromkeys(combo_list))
     return combo_list, combo_list_2
@@ -119,10 +119,10 @@ def get_number_of_unsatisfied_constraints(bools_list):
 
 def check_tb_start_time(schedule):
     """Checks rule #4 Target blocks start and end on a Tuesday DAY shift"""
-    start_date = str(schedule.schedule.values[2][0])
-    end_date = str(schedule.schedule.values[547][0])
-    start_shift = schedule.schedule.values[2][1]
-    end_shift = schedule.schedule.values[547][1]
+    start_date = str(schedule.date[2])
+    end_date = str(schedule.date[547])
+    start_shift = schedule.shift[2]
+    end_shift = schedule.shift[547]
     constraint_log = ""
     if findDay(start_date) == "Tuesday" and start_shift == "DAY" and findDay(end_date) == "Tuesday" and end_shift == "DAY":
         valid_schedule = True
@@ -134,7 +134,7 @@ def check_tb_start_time(schedule):
 
 def check_integer_weeks(schedule):
     """Checks rule #10 Each schedule has a fixed start date, and runs for a fixed integer number of weeks"""
-    total_shifts_in_schedule = schedule.schedule.index.size
+    total_shifts_in_schedule = schedule.size
     constraint_log = ""
     if (total_shifts_in_schedule-1) % 21 == 0:
         valid_schedule = True

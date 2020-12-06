@@ -4,7 +4,7 @@ Author: Kevin Dabu
 Date: OCT.29 2020
 This file contains the basic methods and attributes of a schedule for the TRIUMF Scheduler
 """
-
+import pandas as pd
 class Schedule:
 
     def __init__(self, name, schedule):
@@ -18,7 +18,7 @@ class Schedule:
         self.fitness = None
         self.parameters = None
         self.is_valid = False
-        self.size = get_schedule_size(schedule)
+       # self.size = get_schedule_size(schedule)
 
     @property
     def file_name(self):
@@ -63,15 +63,33 @@ class Schedule:
 
     @property
     def date(self):
-        return set(self.schedule['Date'].tolist())
+        return self.schedule['Date'].tolist()
     
     @property
     def target(self):
-        return set(self.schedule['I_Tgt'].tolist())
+        return self.schedule['I_Tgt'].tolist()
+    
+    @property
+    def source(self):
+        return self.schedule['I_Source'].tolist()
+    
+    @property
+    def module(self):
+        return self.schedule['I_Mod'].tolist()
+    
+    @property
+    def station(self):
+        return self.schedule['I_West/East'].tolist()
 
     @property
     def shift(self):
-        return set(self.schedule['Shift'].tolist())
+        return self.schedule['Shift'].tolist()
+
+    @property
+    def size(self):
+        size = len(self.schedule.index)
+        return size
+ 
 
     def set_fitness_parameters(self, total_exp, priority, requests, fields, acc, fac):
         self.parameters = {'total_exp': total_exp,
@@ -102,17 +120,17 @@ class Schedule:
 
     def set_constraint_logs(self, var):
         self.constraint_logs = var
-        
+
     def set_constraint_bools(self, var):
         self.constraint_bools = var
 
     def __repr__(self):
         return self.name
-
+"""
 def get_schedule_size(schedule):
-    size = len(schedule) + 1
+    size = schedule.index.size
     return size
-
+"""
 def refactor_schedule(schedule):
     """Adjusts schedule columns to proper titles, ignores empty cells, fixes SIS/RILIS to just RILIS"""
     # Rename the column names to the appropriate values
