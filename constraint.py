@@ -13,9 +13,24 @@ import datetime
 import calendar
 from Schedule import Schedule
 
+"""
+   p1 = Target block length
+   p2 = Target block start on Tuesady day shift
+   p3 = Schedule with integer weeks
+   p4 = Target Station and Target module at the schedule start is fixed
+   p5 = Target Station/Target Module alternates for each target block
+   p6 = The minimum length of the final target block in a schedule is 2 weeks
+"""
+
+p1 = True
+p2 = True
+p3 = True
+p4 = True
+p5 = True
+p6 = True
 
 def run_check(schedule):
-    """Main function"""
+    """Main function
 
     constraint_log_set = set()
     logs = (check_tb_length(schedule)[1], check_tb_start_time(schedule)[1], 
@@ -32,7 +47,38 @@ def run_check(schedule):
         return True
     else:
         return False
+    """
+    constraint_output = check_schedule(schedule)
+    schedule.set_constraint_logs = constraint_output[0]
+    schedule.set_constraint_bools = constraint_output[1]
 
+
+
+def check_schedule(schedule):
+    logs = None
+    bools = None
+
+    if p1:
+        logs += check_tb_length(schedule)[1]
+        bools +=  check_tb_length(schedule)[0]
+    if p2:
+        logs += check_tb_start_time(schedule)[1]
+        bools += check_tb_start_time(schedule)[0]
+    if p3:
+        logs += check_integer_weeks(schedule)[1]
+        bools += check_integer_weeks(schedule)[0]
+    if p4:
+        logs += check_target_station(schedule)[1]
+        bools += check_target_station(schedule)[0]
+    if p5:
+        logs += check_ts_tm_alternates(schedule)[1]
+        bools += check_ts_tm_alternates(schedule)[0]
+    if p6:
+        logs += check_minimum_length_of_tb(schedule)[1]
+        bools += check_minimum_length_of_tb(schedule)[0]
+    
+    valid_schedule = all(bools)
+    return logs, valid_schedule
 
 def findDay(date): 
     """Find a weekdays of a date"""
@@ -43,10 +89,10 @@ def findDay(date):
 def get_target_block_set(schedule):
     """Generate a list of all target blocks"""
     target_block_list = list()
-    for i in range(schedule.schedule.index.size):  # schedule.index.size gets the amount of rows within the excel file
-        if (schedule.schedule.values[i][11] != "Tgt") and (pd.notnull(schedule.schedule.values[i][11])):
+    for i in range(schedule.size-1):  # schedule.index.size gets the amount of rows within the excel file
+        if (schedule.target[i]!= "Tgt") and (pd.notnull(schedule.target[i])):
             # Ignores values in Tgt that are equal Tgt or empty
-            target_block = schedule.schedule.values[i][11]+schedule.schedule.values[i][12]+str(schedule.schedule.values[i][13])
+            target_block = schedule.target[i][11]+schedule.values[i][12]+str(schedule.values[i][13])
             target_block_list.append(target_block)
             target_block_set = list(dict.fromkeys(target_block_list))
     return target_block_set, target_block_list

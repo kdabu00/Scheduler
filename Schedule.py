@@ -18,6 +18,7 @@ class Schedule:
         self.fitness = None
         self.parameters = None
         self.is_valid = False
+        self.size = get_schedule_size(schedule)
 
     @property
     def file_name(self):
@@ -65,6 +66,10 @@ class Schedule:
         return set(self.schedule['Date'].tolist())
     
     @property
+    def target(self):
+        return set(self.schedule['I_Tgt'].tolist())
+
+    @property
     def shift(self):
         return set(self.schedule['Shift'].tolist())
 
@@ -95,9 +100,18 @@ class Schedule:
     def set_fitness(self, var):
         self.fitness = var
 
+    def set_constraint_logs(self, var):
+        self.constraint_logs = var
+        
+    def set_constraint_bools(self, var):
+        self.constraint_bools = var
+
     def __repr__(self):
         return self.name
 
+def get_schedule_size(schedule):
+    size = len(schedule) + 1
+    return size
 
 def refactor_schedule(schedule):
     """Adjusts schedule columns to proper titles, ignores empty cells, fixes SIS/RILIS to just RILIS"""
