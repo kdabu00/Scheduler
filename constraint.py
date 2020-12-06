@@ -86,12 +86,16 @@ def findDay(date):
 def get_target_block_set(schedule):
     """Generate a list of all target blocks"""
     target_block_list = list()
+    target_block_set = list()
     for i in range(len(schedule.schedule.index)):  # schedule.index.size gets the amount of rows within the excel file
         if schedule.target[i] != '':
             # Ignores values in Tgt that are equal Tgt or empty
             target_block = schedule.target[i]+schedule.source[i]+str(schedule.module[i])
             target_block_list.append(target_block)
-            target_block_set = list(dict.fromkeys(target_block_list))
+            #target_block_set = list(dict.fromkeys(target_block_list))
+    for i in range(len(target_block_list)-1):
+        if target_block_list[i] != target_block_list[i+1]:
+            target_block_set.append(target_block_list[i])
     return target_block_set, target_block_list
 
 
@@ -133,7 +137,7 @@ def check_integer_weeks(schedule):
     """Checks rule #10 Each schedule has a fixed start date, and runs for a fixed integer number of weeks"""
     total_shifts_in_schedule = schedule.size
     constraint_log = ""
-    if (total_shifts_in_schedule-1) % 21 == 0:
+    if (total_shifts_in_schedule-2) % 21 == 0:
         valid_schedule = True
     else:
         valid_schedule = False
@@ -163,9 +167,9 @@ def check_ts_tm_alternates(schedule):
     target_block_set = get_target_block_set(schedule)[0]
     constraint_log = ""
     for i in range(len(target_block_set) -1):
-        if 'West' in target_block_set[i] and 'East' in target_block_set[i+1]:
+        if '2' in target_block_set[i] and '4' in target_block_set[i+1]:
             valid_schedule = True
-        elif 'East' in target_block_set[i] and 'West' in target_block_set[i+1]:
+        elif '4' in target_block_set[i] and '2' in target_block_set[i+1]:
             valid_schedule = True
         else:
             valid_schedule = False
