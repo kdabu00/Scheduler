@@ -2,75 +2,56 @@
 constraint.py - WIP
 Author: Leo Liu, Kevin Dabu
 a program to read excel files using pandas, containing methods to check the fitness parameters of a schedule
-NOTE: the column headings in the schedule excel files start at row 1 which is
-the row that contains 'Cyclotron', 'BL2A', 'ISAC' etc.. so the values/axes in pandas
-include the actual column headings: 'Data', 'Exp. #', 'Facility' etc...
-THIS IS NOT THE SAME FOR THE REQUESTS
 """
 
-import pandas as pd
 import datetime
 import calendar
-from Schedule import Schedule
 
 """
-   p1 = Target block length
-   p2 = Target block start on Tuesady day shift
+   p1 = Target block length (Violated by current ancestor schedule I suggest to leave it off)
+   p2 = Target block start on Tuesday day shift (Violated by current ancestor schedule I suggest to leave it off)
    p3 = Schedule with integer weeks
    p4 = Target Station and Target module at the schedule start is fixed
    p5 = Target Station/Target Module alternates for each target block
-   p6 = The minimum length of the final target block in a schedule is 2 weeks
+   p6 = The minimum length of the final target block in a schedule is 2 weeks (Violated by current ancestor schedule I suggest to leave it off)
 """
 
-p1 = True
-p2 = True
+p1 = False
+p2 = False
 p3 = True
 p4 = True
 p5 = True
-p6 = True
+p6 = False
+
 
 def run_check(schedule):
-    """Main function
-    constraint_log_set = set()
-    logs = (check_tb_length(schedule)[1], check_tb_start_time(schedule)[1],
-            check_integer_weeks(schedule)[1], check_target_station(schedule)[1],
-            check_ts_tm_alternates(schedule)[1], check_minimum_length_of_tb(schedule)[1])
-    constraint_log_set.add(logs)
-    bools_list = (check_tb_length(schedule)[0], check_tb_start_time(schedule)[0],
-            check_integer_weeks(schedule)[0], check_target_station(schedule)[0],
-            check_ts_tm_alternates(schedule)[0], check_minimum_length_of_tb(schedule)[0])
-    valid_schedule = all(bools_list)
-    if valid_schedule:
-        return True
-    else:
-        return False
-    """
+    """Runs the constraint check on the schedule object"""
     constraint_output = check_schedule(schedule)
     return constraint_output
 
 
-
 def check_schedule(schedule):
+    """Runs check depending on which parameters are True"""
     logs = ''
     bools = []
 
     if p1:
-        logs += check_tb_length(schedule)[1] + '\n'
+        logs += check_tb_length(schedule)[1]
         bools.append(check_tb_length(schedule)[0])
     if p2:
-        logs += check_tb_start_time(schedule)[1] + '\n'
+        logs += check_tb_start_time(schedule)[1]
         bools.append(check_tb_start_time(schedule)[0])
     if p3:
-        logs += check_integer_weeks(schedule)[1] + '\n'
+        logs += check_integer_weeks(schedule)[1]
         bools.append(check_integer_weeks(schedule)[0])
     if p4:
-        logs += check_target_station(schedule)[1] + '\n'
+        logs += check_target_station(schedule)[1]
         bools.append(check_target_station(schedule)[0])
     if p5:
-        logs += check_ts_tm_alternates(schedule)[1] + '\n'
+        logs += check_ts_tm_alternates(schedule)[1]
         bools.append(check_ts_tm_alternates(schedule)[0])
     if p6:
-        logs += check_minimum_length_of_tb(schedule)[1] + '\n'
+        logs += check_minimum_length_of_tb(schedule)[1]
         bools.append(check_minimum_length_of_tb(schedule)[0])
 
     valid_schedule = all(bools)
@@ -129,7 +110,7 @@ def check_tb_start_time(schedule):
         valid_schedule = True
     else:
         valid_schedule = False
-        constraint_log = 'Target blocks start and end on a Tuesday DAY shift'
+        constraint_log = 'Target blocks start and end on a Tuesday DAY shift\n'
     return valid_schedule, constraint_log
 
 
@@ -141,7 +122,7 @@ def check_integer_weeks(schedule):
         valid_schedule = True
     else:
         valid_schedule = False
-        constraint_log = 'The schedule should be a fixed integer weeks'
+        constraint_log = 'The schedule should be a fixed integer weeks\n'
 
     return valid_schedule, constraint_log
 
@@ -157,7 +138,7 @@ def check_target_station(schedule):
             valid_schedule = True
         else:
             valid_schedule = False
-            constraint_log = 'The Target Station/Target Module combination is fixed'
+            constraint_log = 'The Target Station/Target Module combination is fixed\n'
 
     return valid_schedule, constraint_log
 
@@ -173,7 +154,7 @@ def check_ts_tm_alternates(schedule):
             valid_schedule = True
         else:
             valid_schedule = False
-            constraint_log = 'The Target Station/Target Module combination should alternate for each target block'
+            constraint_log = 'The Target Station/Target Module combination should alternate for each target block\n'
     return valid_schedule, constraint_log
 
 
@@ -189,7 +170,7 @@ def check_tb_length(schedule):
             target_block_shifts += 1
         elif target_block_shifts < 63 or target_block_shifts > 105:
             valid_schedule = False
-            constraint_log = 'The maximum length of a target block with UCx is 4 weeks, and other target block is 5 weeks. The minimum length of a target block is 3 weeks'
+            constraint_log = 'The maximum length of a target block with UCx is 4 weeks, and other target block is 5 weeks. The minimum length of a target block is 3 weeks\n'
             target_block_shifts = 0
         else:
             valid_schedule = False
@@ -208,6 +189,6 @@ def check_minimum_length_of_tb(schedule):
         else:
             if target_block_shifts < 42 :
                 valid_schedule = False
-                constraint_log = 'The minimum length of the final target block in a schedule is 2 weeks'
+                constraint_log = 'The minimum length of the final target block in a schedule is 2 weeks\n'
             target_block_shifts = 0
     return valid_schedule, constraint_log

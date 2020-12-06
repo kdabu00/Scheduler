@@ -6,7 +6,7 @@ testing out methods to modify the ancestor schedule to create new schedules base
 planned.
 Author: Kevin Dabu
 
-TODO: Make modular, move code from main to own separate functions, finalize the generation, fix the rest of the code..
+WIP - Has some methods to attempt making changes on a schedule
 """
 from Request import Request
 import FileManager as fm
@@ -91,23 +91,25 @@ def main():
 
     """This section below should be within a loop using the startups to find the start_index and loops to find the 
     values within the tgt_exp dictionary"""
+
     # index of the first startup indicating new target block, set as 86 for now, will be using the startups list later
     start_index = 86
+
     # finds the shift of the first experiment in with the target TA as TA was the best fit for this block (63/65)
     a = start_index + tgt_exp['TA'][0][1]
+
     # Sets the experiment from tgt_exp['TA'][0][0] which is L122 for
     new_schedule.loc[(start_index+1):a, 'I_Exp.#':'I_Source'] = tgt_exp['TA'][0][0]
+
     # move the starting index to the next point since the exp was only 5 shifts long (86 + 5) = 91,
     # the next starting index should be + 1
     start_index += (a + 1)
+
     # Testing to see the new dataframe and how it looks right now,
     # Need to change so we have all columns and rows not just exp.#, facility, tgt, source etc...
     pd.set_option('display.max_columns', None)
     pd.set_option('max_rows', None)
     print(new_schedule)
-
-    """AFTER RUNNING THIS YOU WILL SEE SettingWithCopyWarning need to set up a try catch or something to ignore this
-    Error as it doesnt effect the output.."""
 
 
 def find_exp_shifts(schedule):

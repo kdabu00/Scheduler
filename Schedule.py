@@ -3,8 +3,12 @@ Schedule.py
 Author: Kevin Dabu
 Date: OCT.29 2020
 This file contains the basic methods and attributes of a schedule for the TRIUMF Scheduler
+Refactors each schedule inputted to have proper column values to be able to read them using pandas functions
 """
 import pandas as pd
+import FileManager as fm
+# Ignores setting with copy warning
+pd.options.mode.chained_assignment = None
 
 
 class Schedule:
@@ -20,9 +24,6 @@ class Schedule:
         self.fitness = None
         self.parameters = None
         self.is_valid = False
-
-
-    # self.size = get_schedule_size(schedule)
 
     @property
     def file_name(self):
@@ -124,19 +125,23 @@ class Schedule:
     def set_fitness(self, var):
         self.fitness = var
 
+    def update_fields(self) -> None:
+        """
+        This should only be ran when an experiment meets required fitness levels,
+        and is chosen as a schedule to be used - WIP
+        """
+        old_fields = fm.read_data('fields.csv', 'field')
+        for key in self.fields:
+            old_fields[key] += self.fields[key]
+        fm.save_data(old_fields, 'fields.csv')
+
     def __repr__(self):
         return self.name
 
 
-"""
-def get_schedule_size(schedule):
-    size = schedule.index.size
-    return size
-"""
-
-
 def refactor_schedule(schedule):
-    """Adjusts schedule columns to proper titles, ignores empty cells, fixes SIS/RILIS to just RILIS"""
+    """Adjusts schedule columns to proper titles, ignores empty cells,
+    fixes SIS/RILIS to just RILIS, changes Source, Facility, Exp.# and Tgt values to upper case"""
     # Rename the column names to the appropriate values
     schedule.columns = ['Date', 'Shift', 'Cyclotron_Offline', 'current(uA)', 'BL2A_Offline',
                         'I_Exp.#', 'I_Facility', 'I_Note', 'I_West/East', 'I_Beam', 'I_Energy (keV)', 'I_Tgt',
