@@ -1,5 +1,5 @@
 """
-FitnessChecker.py - WIP (REQUIRES MORE COMMENTS/Refactoring)
+FitnessChecker.py
 Author: Kevin Dabu
 
 Checks the fitness parameters of a TRIUMF Schedule (Only ISAC experiments)
@@ -48,7 +48,7 @@ def run_check():
         request = Request(request_file[0], request)
 
         # Uses constraint.py to check the schedule
-        valid = c.run_check(schedule)
+        valid = c.run_check(schedule, request)
 
         # Is the schedule valid? if True check fitness, if false print error log
         if valid[1]:

@@ -2,35 +2,42 @@
 constraint.py - WIP
 Author: Leo Liu, Kevin Dabu
 a program to read excel files using pandas, containing methods to check the fitness parameters of a schedule
+NOTE: the column headings in the schedule excel files start at row 1 which is
+the row that contains 'Cyclotron', 'BL2A', 'ISAC' etc.. so the values/axes in pandas
+include the actual column headings: 'Data', 'Exp. #', 'Facility' etc...
+THIS IS NOT THE SAME FOR THE REQUESTS
 """
 
+import pandas as pd
 import datetime
 import calendar
+from Schedule import Schedule
 
 """
-   p1 = Target block length (Violated by current ancestor schedule I suggest to leave it off)
-   p2 = Target block start on Tuesday day shift (Violated by current ancestor schedule I suggest to leave it off)
+   p1 = Target block length
+   p2 = Target block start on Tuesady day shift
    p3 = Schedule with integer weeks
    p4 = Target Station and Target module at the schedule start is fixed
    p5 = Target Station/Target Module alternates for each target block
-   p6 = The minimum length of the final target block in a schedule is 2 weeks (Violated by current ancestor schedule I suggest to leave it off)
+   p6 = The minimum length of the final target block in a schedule is 2 weeks
 """
 
 p1 = False
 p2 = False
 p3 = True
 p4 = True
-p5 = True
+p5 = False
 p6 = False
+p7 = True
 
 
-def run_check(schedule):
+def run_check(schedule, request):
     """Runs the constraint check on the schedule object"""
-    constraint_output = check_schedule(schedule)
+    constraint_output = check_schedule(schedule, request)
     return constraint_output
 
 
-def check_schedule(schedule):
+def check_schedule(schedule, request):
     """Runs check depending on which parameters are True"""
     logs = ''
     bools = []
@@ -53,6 +60,9 @@ def check_schedule(schedule):
     if p6:
         logs += check_minimum_length_of_tb(schedule)[1]
         bools.append(check_minimum_length_of_tb(schedule)[0])
+    if p7:
+        logs += check_experiment_shifts(schedule, request)[1]
+        bools.append(check_experiment_shifts(schedule, request)[0])
 
     valid_schedule = all(bools)
     return logs, valid_schedule
@@ -101,11 +111,13 @@ def get_number_of_unsatisfied_constraints(bools_list):
 
 def check_tb_start_time(schedule):
     """Checks rule #4 Target blocks start and end on a Tuesday DAY shift"""
-    start_date = str(schedule.date[2])
-    end_date = str(schedule.date[547])
-    start_shift = schedule.shift[2]
-    end_shift = schedule.shift[547]
+    last_row_num = len(schedule.schedule.index)-1
+    start_date = str(schedule.date[0])
+    end_date = str(schedule.date[last_row_num])
+    start_shift = schedule.shift[0]
+    end_shift = schedule.shift[last_row_num]
     constraint_log = ""
+    valid_schedule = True
     if findDay(start_date) == "Tuesday" and start_shift == "DAY" and findDay(end_date) == "Tuesday" and end_shift == "DAY":
         valid_schedule = True
     else:
@@ -118,6 +130,7 @@ def check_integer_weeks(schedule):
     """Checks rule #10 Each schedule has a fixed start date, and runs for a fixed integer number of weeks"""
     total_shifts_in_schedule = schedule.size
     constraint_log = ""
+    valid_schedule = True
     if (total_shifts_in_schedule-2) % 21 == 0:
         valid_schedule = True
     else:
@@ -133,6 +146,7 @@ def check_target_station(schedule):
     combo_list = get_ts_tm_combo(schedule)[0]
     target_combo_list = (combo_list_2[0], combo_list_2[1])
     constraint_log = ""
+    valid_schedule = True
     for i in range(len(combo_list)):
         if combo_list[i] in target_combo_list:
             valid_schedule = True
@@ -147,6 +161,7 @@ def check_ts_tm_alternates(schedule):
     """checks rule #2 if the combination of Target Station/Target Module alternates for each target block"""
     target_block_set = get_target_block_set(schedule)[0]
     constraint_log = ""
+    valid_schedule = True
     for i in range(len(target_block_set) -1):
         if '2' in target_block_set[i] and '4' in target_block_set[i+1]:
             valid_schedule = True
@@ -163,8 +178,9 @@ def check_tb_length(schedule):
     target_block_list = get_target_block_set(schedule)[1]
     target_block_shifts = 0
     constraint_log = ""
+    valid_schedule = True
     for i in range(len(target_block_list)-43):
-        if ('UCx' in target_block_list[i]) and (target_block_list[i] == target_block_list[i+1]):
+        if ('UC' in target_block_list[i]) and (target_block_list[i] == target_block_list[i+1]):
             target_block_shifts += 1.25
         elif (target_block_list[i] == target_block_list[i+1]):
             target_block_shifts += 1
@@ -183,6 +199,7 @@ def check_minimum_length_of_tb(schedule):
     target_block_list = get_target_block_set(schedule)[1]
     target_block_shifts = 0
     constraint_log = ""
+    valid_schedule = True
     for i in range(len(target_block_list)-1):
         if target_block_list[i] == target_block_list[i+1]:
             target_block_shifts += 1
@@ -192,3 +209,46 @@ def check_minimum_length_of_tb(schedule):
                 constraint_log = 'The minimum length of the final target block in a schedule is 2 weeks\n'
             target_block_shifts = 0
     return valid_schedule, constraint_log
+
+
+def check_shifts(schedule):
+    """Checks rule #11 Each 24-hr period is divided into 8-hr ‘shifts’, named OWL, DAY, EVE """
+    constraint_log = ""
+    valid_schedule = True
+    for i in range(len(schedule.schedule.index)-1):
+        if schedule.shift[i] == "OWL" and schedule.shift[i+1] == "DAY":
+            valid_schedule = True
+        elif schedule.shift[i] == "DAY" and schedule.shift[i+1] == "EVE":
+            valid_schedule = True
+        elif schedule.shift[i] == "EVE" and schedule.shift[i+1] == "OWL":
+            valid_schedule = True
+        else:
+            valid_schedule = False
+            constraint_log = 'Each 24-hr period should be divided into 8-hr ‘shifts’, named OWL, DAY, EVE\n'
+    return valid_schedule, constraint_log
+
+
+def check_experiment_shifts(schedule, request):
+    """Checks rule #13 experiment shifts"""
+    # all unique experiments
+    unique_exp = list(schedule.experiments)
+    # schedule dataframe
+    df = schedule.schedule
+    req_exp = request.experiments
+    # find location of experiments 'I_Exp.#', 'I_Facility', 'I_Tgt', 'I_Source'
+    # Default is True
+    valid_schedule = True
+    log = ''
+    for exp in unique_exp:
+        if exp in req_exp:
+            # Get the amount
+            num_shifts = len(df.loc[(df['I_Exp.#'] == exp[0]) & (df['I_Facility'] == exp[1]) & (df['I_Tgt'] == exp[2]) & (df['I_Source'] == exp[3])].values.tolist())
+            if (num_shifts > req_exp[exp][3]) or (num_shifts < (req_exp[exp][3] * 0.85)):
+                valid_schedule = False
+                if log == '':
+                    log += "Check requested shifts for experiments: " + str(exp)
+                else:
+                    log += ', ' + str(exp)
+    if log != '':
+        log += '\n'
+    return valid_schedule, log

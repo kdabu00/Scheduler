@@ -9,13 +9,13 @@ import pandas as pd
 # Ignores setting with copy warning
 pd.options.mode.chained_assignment = None
 
-
 class Request:
 
     def __init__(self, name, request):
         """Creates an instance of the request class"""
         self.name = name
         self.request = refactor_request(request)
+        self.request_repeat = repeat_request_by_shift(request)
 
     @property
     def experiments(self):
@@ -41,9 +41,37 @@ class Request:
 
     @property
     def facilities(self):
-        """returns the unique facilities in a request file as a list,
-         if we remove the set typecasting it returns all facilities even duplicates"""
         return set(self.request['Facility'].tolist())
+    
+    @property
+    def facilitie(self):
+        return self.request_repeat['Facility'].tolist()
+    
+    @property
+    def required_shifts(self):
+        return self.request_repeat['Shifts requested'].tolist()
+    
+    @property
+    def expirment_number(self):
+        return self.request_repeat['Experiment'].tolist()
+
+    @property
+    def beam(self):
+        return self.request_repeat['Beam'].tolist()
+
+    @property
+    def target_type(self):
+        return self.request_repeat['Target'].tolist()
+    
+    @property
+    def source(self):
+        return self.request_repeat['Ion Source'].tolist()
+
+    @property
+    def sort_by_target_block(self):
+        # Group by source then group by target type
+        requests_sort_by_tb = self.request.sort_values(by=['Ion Source', 'Target'])
+        return requests_sort_by_tb
 
     @property
     def high_priority(self):
@@ -64,3 +92,17 @@ def refactor_request(request):
     # change nan values into empty string
     request = request.fillna('')
     return request
+
+
+def repeat_request_by_shift(request):
+    # Get request is an ISAC experiment
+    request = request.loc[(request['Beam options'] == 'ISAC Target (RIB)') & (request['Experiment'] != 'Test')]
+    request = request.fillna('')
+    # Sort request by source and target type
+    requests_sort_by_tb = request.sort_values(by=['Ion Source', 'Target'])
+    # Get the request repeat by shift
+    shift_requested_list = requests_sort_by_tb['Shifts requested'].tolist()
+    requests_sort_by_tb = requests_sort_by_tb.loc[requests_sort_by_tb.index.repeat(requests_sort_by_tb['Shifts requested'])].reset_index(
+        drop=True)
+    request_repeat = requests_sort_by_tb.sort_values(by=['Priority', 'Ion Source', 'Target'])
+    return request_repeat
