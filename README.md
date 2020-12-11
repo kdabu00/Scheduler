@@ -26,4 +26,4 @@ HOW TO USE:
 * Fitness evaluations for each schedule in the Schedule Folder are generated as text files within the Schedule/Fitness folder.
 
 <strong>WARNING:</strong>
-There is a known error that can occur if you have one of the excel files open when running FitnessChecker.py, it is because of the temporary xml file that is created when the real file is open. To avoid this close all excel files before running the program.
+There is a known error that can occur if you have one of the excel files open when running FitnessChecker.py, it is because of the temporary excel file that is created when the base file is open. To avoid this close all excel files before running the program.
