@@ -1,8 +1,10 @@
 """
 FileManager.py
 Author: Kevin Dabu
+This is a program that uses the pandas Library to read/write/update excel files
+and has a prompt for file names
 
-Reads excel files using the pandas and numpy libraries. also uses csv library to read csv files
+WIP
 """
 
 import pandas as pd
