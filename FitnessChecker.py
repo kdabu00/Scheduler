@@ -1,13 +1,9 @@
 """
-FitnessChecker.py - WIP (REQUIRES MORE COMMENTS/Refactoring)
+FitnessChecker.py
 Author: Kevin Dabu
 
-a program to read excel files using pandas, containing methods to check the fitness parameters of a schedule
-
-NOTE: the column headings in the schedule excel files start at row 1 which is
-the row that contains 'Cyclotron', 'BL2A', 'ISAC' etc.. so the values/axes in pandas
-include the actual column headings: 'Data', 'Exp. #', 'Facility' etc...
-THIS IS NOT THE SAME FOR THE REQUESTS
+Checks the fitness parameters of a TRIUMF Schedule (Only ISAC experiments)
+Uses the constraint.py to check schedule validity before fitness evaluation
 """
 
 from Schedule import Schedule
@@ -48,23 +44,29 @@ def run_check():
         # assign the excel data frame to respective variable
         schedule = fm.read_file('Schedules', schedule_files[i])
         request = fm.read_file('Requests', request_file[0])
-
-        sm.add_schedule(Schedule(schedule_files[i].replace('.xlsx', ''), schedule))
-        schedule = sm.schedules[i]
+        schedule = Schedule(schedule_files[i].replace('.xlsx', ''), schedule)
         request = Request(request_file[0], request)
-        print(c.run_check(schedule, request)[0])
-        # Find schedule attributes
 
-        schedule.set_priorities(check_priorities(schedule.experiments, request.experiments))
-        schedule.set_fields(check_fields(schedule.experiments, request.experiments))
-        schedule.set_acc(check_acc(schedule.experiments, request.experiments))
+        # Uses constraint.py to check the schedule
+        valid = c.run_check(schedule, request)
 
-        # Fitness checks
-        output = calculate_total_fitness(request, schedule)
-        schedule.set_fitness(output[0])
+        # Is the schedule valid? if True check fitness, if false print error log
+        if valid[1]:
+            # Find schedule attributes
+            schedule.set_priorities(check_priorities(schedule.experiments, request.experiments))
+            schedule.set_fields(check_fields(schedule.experiments, request.experiments))
+            schedule.set_acc(check_acc(schedule.experiments, request.experiments))
 
-        # Generates output
-        schedule.set_output(output[1])
+            # Fitness checks
+            output = calculate_total_fitness(request, schedule)
+            schedule.set_fitness(output[0])
+
+            # Generates output
+            schedule.set_output(output[1])
+            sm.add_schedule(schedule)
+        else:
+            print(schedule)
+            print('Invalid Schedule:', valid[0])
 
     # sorts the schedules in the schedule manager by fitness values
     sm.sort_by_fitness()
@@ -87,7 +89,7 @@ def calculate_total_fitness(request, schedule):
 
     if p1:
         total_exp = (6 * len(schedule.experiments)) / schedule.shifts
-        text += "\nParameter 1: Total Experiments\nExperiments Scheduled: %d\n" % len(schedule.experiments)
+        text += "\nParameter 1: Total Experiments\nExperiments Scheduled: %d\nFitness: %0.2f" % (len(schedule.experiments), total_exp)
     if p2:
         priority = schedule.priorities['H'] / len(schedule.experiments)
         text += "\nParameter 2: High Priority vs Scheduled Experiments\nH: %d Scheduled: %d" % (schedule.priorities['H'], len(schedule.experiments))
@@ -116,6 +118,9 @@ def calculate_total_fitness(request, schedule):
         if schedule.parameters[key] is not None:
             fitness *= schedule.parameters[key]
     text += "\nTOTAL FITNESS: %0.2f" % fitness
+
+    """This piece of code updates the fields in the fields.csv, should only be used when the schedule is the"""
+    # update_fields(schedule.fields)
 
     return fitness, text
 
@@ -176,9 +181,12 @@ def find_balance(schedule, use_case):
         return product
 
     elif use_case == 'field':
+        # Reads the field values from the fields.csv and calculates the balance according to it
         old_fields = fm.read_data('fields.csv', 'field')
+
         total_fields_past = old_fields['ASTRO'] + old_fields['STRUC'] + old_fields['FSYMM']
         total_fields_current = schedule['ASTRO'] + schedule['FSYMM'] + schedule['STRUC']
+
         deltas = [(schedule['ASTRO'] / total_fields_current - old_fields['ASTRO'] / total_fields_past),
                   (schedule['FSYMM'] / total_fields_current - old_fields['FSYMM'] / total_fields_past),
                   (schedule['STRUC'] / total_fields_current - old_fields['STRUC'] / total_fields_past)]

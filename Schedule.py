@@ -5,6 +5,8 @@ Date: OCT.29 2020
 This file contains the basic methods and attributes of a schedule for the TRIUMF Scheduler
 """
 import pandas as pd
+# Ignores setting with copy warning
+pd.options.mode.chained_assignment = None
 
 
 class Schedule:

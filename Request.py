@@ -5,7 +5,9 @@ Date: Oct.29 2020
 
 Requests class object
 """
-
+import pandas as pd
+# Ignores setting with copy warning
+pd.options.mode.chained_assignment = None
 
 class Request:
 
